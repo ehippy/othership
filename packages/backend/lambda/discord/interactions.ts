@@ -1,8 +1,8 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import { verify } from "@noble/ed25519";
 import { Resource } from "sst";
-import { gameService, playerService } from "../../db/services";
-import { postToChannel } from "../../lib/discord-client";
+import { gameService, playerService, guildService } from "../../db/services";
+import { postToChannel, fetchGuildInfo } from "../../lib/discord-client";
 
 // Discord interaction types
 const InteractionType = {
@@ -86,13 +86,38 @@ export async function handler(
     const userId = interaction.member?.user?.id || interaction.user?.id;
     const username =
       interaction.member?.user?.username || interaction.user?.username;
+    const guildId = interaction.guild_id;
+
+    // Lazy initialization: ensure guild exists in our database
+    if (guildId) {
+      try {
+        const existingGuild = await guildService.getGuildByDiscordId(guildId);
+        if (!existingGuild) {
+          console.log("[interactions] Lazy initializing guild:", guildId);
+          const guildInfo = await fetchGuildInfo(guildId);
+          if (guildInfo) {
+            await guildService.createGuild({
+              discordGuildId: guildId,
+              name: guildInfo.name,
+              icon: guildInfo.icon || undefined,
+              botInstalled: true,
+              installedAt: new Date().toISOString(),
+            });
+            console.log("[interactions] Guild initialized:", guildInfo.name);
+          }
+        }
+      } catch (error) {
+        console.error("[interactions] Failed to initialize guild:", error);
+        // Continue anyway - non-critical
+      }
+    }
 
     try {
       switch (name) {
         case "start-game": {
           // Create new game
           const game = await gameService.createGame({
-            serverId: interaction.guild_id,
+            guildId: interaction.guild_id,
             channelId,
           });
 

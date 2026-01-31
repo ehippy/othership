@@ -2,7 +2,8 @@
 
 import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setToken, isAuthenticated, clearToken, getUsername, getAvatar, getDiscordUserId, getAvatarUrl } from "@/lib/auth";
+import { setToken, isAuthenticated, clearToken, getUsername, getAvatar, getDiscordUserId } from "@/lib/auth";
+import { BottomDock } from "@/components/BottomDock";
 
 function HomeContent() {
   const router = useRouter();
@@ -53,36 +54,27 @@ function HomeContent() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
-      <div className="text-center">
-        <div className="absolute top-4 right-4">
-          <div className="flex items-center gap-3">
-            {avatar && discordUserId && (
-              <img
-                src={getAvatarUrl(discordUserId, avatar)}
-                alt="Discord avatar"
-                className="w-8 h-8 rounded-full"
-              />
-            )}
-            {username && (
-              <span className="text-gray-400 text-sm">{username}</span>
-            )}
-            <button
-              onClick={handleLogout}
-              className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm"
-            >
-              Logout
-            </button>
-          </div>
+    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pb-16">
+      {/* Main content area */}
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">Othership</h1>
+          <p className="text-xl text-gray-400">
+            Cooperative survival horror in space
+          </p>
+          <p className="mt-8 text-sm text-gray-500">
+            Select a server from the dock below to get started
+          </p>
         </div>
-        <h1 className="text-4xl font-bold mb-4">Othership</h1>
-        <p className="text-xl text-gray-400">
-          Cooperative survival horror in space
-        </p>
-        <p className="mt-8 text-sm text-gray-500">
-          Game interface coming soon...
-        </p>
       </div>
+
+      {/* Bottom dock */}
+      <BottomDock
+        avatar={avatar}
+        discordUserId={discordUserId}
+        username={username}
+        onLogout={handleLogout}
+      />
     </main>
   );
 }

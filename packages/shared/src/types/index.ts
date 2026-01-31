@@ -69,7 +69,7 @@ export interface Player {
 
 export interface Game {
   id: string;
-  serverId: string;
+  guildId: string;
   channelId: string;
   status: 'setup' | 'active' | 'paused' | 'completed';
   turnNumber: number;

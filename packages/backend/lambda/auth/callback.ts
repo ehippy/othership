@@ -100,6 +100,13 @@ export async function handler(
 
     const guilds = (await guildsResponse.json()) as DiscordGuild[];
 
+    // Map guilds to the format expected by our database (ensure icon is string or undefined)
+    const mappedGuilds = guilds.map(guild => ({
+      id: guild.id,
+      name: guild.name,
+      icon: guild.icon || undefined, // Convert null to undefined, ensure it's a string
+    }));
+
     // Create or update player (without gameId - they'll join games later)
     const existingPlayers = await playerService.getPlayersByDiscordUser(user.id);
     
@@ -112,6 +119,8 @@ export async function handler(
         discordDisplayName: user.global_name,
         discordAvatar: user.avatar,
       });
+      // Update guilds separately
+      player = await playerService.updateGuilds(player.id, mappedGuilds);
     } else {
       // Create new player without a game (they'll join later)
       player = await playerService.createPlayer({
@@ -121,6 +130,8 @@ export async function handler(
         discordAvatar: user.avatar,
         gameId: "", // Empty gameId - player not in a game yet
       });
+      // Update guilds after creation
+      player = await playerService.updateGuilds(player.id, mappedGuilds);
     }
 
     // Sign JWT (use display name if available, fallback to username)

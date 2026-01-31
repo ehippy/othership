@@ -20,10 +20,12 @@
 - **Infrastructure:** AWS Lambda + API Gateway (serverless)
 - **Database:** AWS DynamoDB with ElectroDB (TypeScript ORM)
 - **API Layer:** tRPC for type-safe endpoints
+- **Deployment:** SST Ion 3.x
 
 ### Frontend
 - **Framework:** Next.js (App Router) with TypeScript
 - **UI Library:** React
+- **Styling:** Tailwind CSS
 - **Game Rendering:** Pixi.js for 2D WebGL rendering
   - @pixi/react for React integration
   - pixi-tilemap for efficient tile rendering
@@ -37,6 +39,39 @@
 - **Testing:** Jest + React Testing Library
 - **Code Quality:** ESLint + Prettier
 - **CI/CD:** GitHub Actions → AWS deployment
+
+## Debugging & Logs
+
+### CloudWatch Logs
+**ALL Lambda functions log to CloudWatch Logs**. When debugging 500 errors or backend issues:
+
+1. **View logs in terminal during dev:**
+   ```bash
+   npx sst dev --stage dev
+   ```
+   Shows real-time logs for all Lambda invocations in the terminal.
+
+2. **View logs in AWS Console:**
+   - Go to CloudWatch → Log Groups
+   - Find log groups matching: `/aws/lambda/dev-*`
+   - Common log groups:
+     - `/aws/lambda/dev-TrpcHandler` - tRPC API calls
+     - `/aws/lambda/dev-LoginHandler` - OAuth login
+     - `/aws/lambda/dev-CallbackHandler` - OAuth callback
+     - `/aws/lambda/dev-DiscordWebhook` - Discord interactions
+
+3. **Log retention:** Set to 1 week for all functions (see sst.config.ts)
+
+### Frontend Debugging
+- Check browser console for client-side errors
+- Check Network tab for failed API calls
+- tRPC errors will show in console with error details
+
+### Common Issues
+- **500 errors:** Always check CloudWatch logs for the Lambda function
+- **CORS errors:** Check handler.ts CORS headers
+- **Auth errors:** Check JWT token in localStorage
+- **Database errors:** ElectroDB validation errors show exact field issues
 
 ## Architecture
 

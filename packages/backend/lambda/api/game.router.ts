@@ -7,13 +7,13 @@ export const gameRouter = router({
   create: publicProcedure
     .input(
       z.object({
-        serverId: z.string(),
+        guildId: z.string(),
         channelId: z.string(),
       })
     )
     .mutation(async ({ input }) => {
       return await gameService.createGame({
-        serverId: input.serverId,
+        guildId: input.guildId,
         channelId: input.channelId,
       });
     }),
@@ -30,11 +30,11 @@ export const gameRouter = router({
       return game;
     }),
 
-  // Get all games in a server
-  listByServer: publicProcedure
-    .input(z.object({ serverId: z.string() }))
+  // Get all games in a guild
+  listByGuild: publicProcedure
+    .input(z.object({ guildId: z.string() }))
     .query(async ({ input }) => {
-      return await gameService.getGamesByServer(input.serverId);
+      return await gameService.getGamesByGuild(input.guildId);
     }),
 
   // Get active game in channel

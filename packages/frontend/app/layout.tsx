@@ -19,6 +19,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Othership - Cooperative Survival Horror in Space</title>
         <meta name="description" content="A cooperative survival horror game set in space" />
+        <link rel="icon" type="image/png" href="/assets/othership-favicon.png" />
       </head>
       <body>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>

@@ -84,3 +84,36 @@ export async function replyToInteraction(
     throw new Error(`Failed to reply to interaction: ${error}`);
   }
 }
+
+/**
+ * Fetch guild information from Discord API
+ */
+export async function fetchGuildInfo(guildId: string): Promise<{
+  id: string;
+  name: string;
+  icon: string | null;
+} | null> {
+  const response = await fetch(
+    `${DISCORD_API_BASE}/guilds/${guildId}`,
+    {
+      headers: {
+        Authorization: `Bot ${Resource.DiscordBotToken.value}`,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
+    const error = await response.text();
+    throw new Error(`Failed to fetch guild info: ${error}`);
+  }
+
+  const guild = await response.json();
+  return {
+    id: guild.id,
+    name: guild.name,
+    icon: guild.icon,
+  };
+}

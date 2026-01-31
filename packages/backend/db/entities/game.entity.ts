@@ -14,7 +14,7 @@ export const GameEntity = new Entity(
         type: "string",
         required: true,
       },
-      serverId: {
+      guildId: {
         type: "string",
         required: true,
       },
@@ -69,11 +69,11 @@ export const GameEntity = new Entity(
           composite: [],
         },
       },
-      byServer: {
+      byGuild: {
         index: "gsi1",
         pk: {
           field: "gsi1pk",
-          composite: ["serverId"],
+          composite: ["guildId"],
         },
         sk: {
           field: "gsi1sk",

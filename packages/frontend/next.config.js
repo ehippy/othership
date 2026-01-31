@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@othership/shared'],
+  env: {
+    NEXT_PUBLIC_DISCORD_APP_ID: process.env.DISCORD_APPLICATION_ID,
+  },
   webpack: (config) => {
     // Pixi.js requires WebGL and canvas support
     config.resolve.fallback = {

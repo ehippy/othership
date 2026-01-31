@@ -3,10 +3,13 @@ import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 import { Resource } from "sst";
 
 // Create DynamoDB client
-const client = new DynamoDBClient({});
+const dynamoClient = new DynamoDBClient({});
+
+// Export raw client for ElectroDB
+export const client = dynamoClient;
 
 // Create DynamoDB Document client (handles marshalling)
-export const dynamoDb = DynamoDBDocumentClient.from(client, {
+export const dynamoDb = DynamoDBDocumentClient.from(dynamoClient, {
   marshallOptions: {
     removeUndefinedValues: true,
     convertEmptyValues: false,

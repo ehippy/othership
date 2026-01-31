@@ -7,14 +7,14 @@ export const gameService = {
    * Create a new game
    */
   async createGame(params: {
-    serverId: string;
+    guildId: string;
     channelId: string;
   }): Promise<Game> {
     const id = ulid();
     
     const result = await GameEntity.create({
       id,
-      serverId: params.serverId,
+      guildId: params.guildId,
       channelId: params.channelId,
       status: "setup",
       turnNumber: 0,
@@ -37,10 +37,10 @@ export const gameService = {
   },
 
   /**
-   * Get all games in a Discord server
+   * Get all games in a Discord guild
    */
-  async getGamesByServer(serverId: string): Promise<Game[]> {
-    const result = await GameEntity.query.byServer({ serverId }).go();
+  async getGamesByGuild(guildId: string): Promise<Game[]> {
+    const result = await GameEntity.query.byGuild({ guildId }).go();
     return result.data as Game[];
   },
 

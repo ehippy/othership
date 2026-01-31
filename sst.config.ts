@@ -56,6 +56,7 @@ export default $config({
       environment: {
         NEXT_PUBLIC_API_URL: $interpolate`${api.url}/trpc`,
         NEXT_PUBLIC_AUTH_LOGIN_URL: $interpolate`${api.url}/auth/login`,
+        NEXT_PUBLIC_DISCORD_APP_ID: discordApplicationId.value,
       },
     });
     
@@ -91,6 +92,16 @@ export default $config({
       },
       environment: {
         FRONTEND_URL: frontend.url,
+      },
+    });
+
+    api.route("GET /auth/bot-added", {
+      handler: "packages/backend/lambda/auth/bot-added.handler",
+      link: [table, discordBotToken],
+      timeout: "10 seconds",
+      memory: "512 MB",
+      logging: {
+        retention: "1 week",
       },
     });
 
