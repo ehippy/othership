@@ -3,7 +3,7 @@
 import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { setToken, isAuthenticated, clearToken, getUsername, getAvatar, getDiscordUserId } from "@/lib/auth";
-import { BottomDock } from "@/components/BottomDock";
+import { TopBar } from "@/components/TopBar";
 import { trpc } from "@/lib/api/trpc";
 
 interface Guild {
@@ -93,7 +93,7 @@ function HomeContent() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pb-16">
+    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pt-16">
       {/* Main content area */}
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -120,8 +120,8 @@ function HomeContent() {
         </div>
       </div>
 
-      {/* Bottom dock */}
-      <BottomDock
+      {/* Top bar */}
+      <TopBar
         avatar={avatar}
         discordUserId={discordUserId}
         username={username}

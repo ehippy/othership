@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { ServerSelector } from "./ServerSelector";
 
-interface BottomDockProps {
+interface TopBarProps {
   avatar: string | null;
   discordUserId: string | null;
   username: string | null;
@@ -12,7 +12,7 @@ interface BottomDockProps {
   selectedGuildIcon?: string | null;
 }
 
-export function BottomDock({ avatar, discordUserId, username, onLogout, onSelectGuild, selectedGuildName, selectedGuildId, selectedGuildIcon }: BottomDockProps) {
+export function TopBar({ avatar, discordUserId, username, onLogout, onSelectGuild, selectedGuildName, selectedGuildId, selectedGuildIcon }: TopBarProps) {
   const [showServers, setShowServers] = useState(false);
 
   const getAvatarUrl = (userId: string, avatarHash: string | null): string => {
@@ -33,7 +33,7 @@ export function BottomDock({ avatar, discordUserId, username, onLogout, onSelect
     <>
       {/* Server selector popup */}
       {showServers && (
-        <div className="fixed bottom-20 left-4 z-50">
+        <div className="fixed top-20 left-4 z-50">
           <ServerSelector 
             onClose={() => setShowServers(false)}
             onSelectGuild={onSelectGuild}
@@ -41,8 +41,8 @@ export function BottomDock({ avatar, discordUserId, username, onLogout, onSelect
         </div>
       )}
 
-      {/* Bottom dock */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-gray-800 border-t border-gray-700 flex items-center justify-between px-4 z-40">
+      {/* Top bar */}
+      <div className="fixed top-0 left-0 right-0 h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-4 z-40">
         {/* Left: Server selector */}
         <button
           onClick={() => setShowServers(!showServers)}
