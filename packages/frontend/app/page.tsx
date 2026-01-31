@@ -1,111 +1,16 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { setToken, isAuthenticated, clearToken, getUsername, getAvatar, getDiscordUserId } from "@/lib/auth";
+import React, { Suspense } from "react";
 import { TopBar } from "@/components/TopBar";
-import { trpc } from "@/lib/api/trpc";
-import { createGuildPath, parseGuildPath } from "@/lib/utils";
-
-interface Guild {
-  id: string;
-  name: string;
-  icon?: string;
-  botInstalled?: boolean;
-}
+import { useAuth } from "@/lib/hooks/useAuth";
+import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 
 function HomeContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const [isChecking, setIsChecking] = React.useState(true);
-  const [username, setUsername] = React.useState<string | null>(null);
-  const [avatar, setAvatar] = React.useState<string | null>(null);
-  const [discordUserId, setDiscordUserId] = React.useState<string | null>(null);
-  const [selectedGuildId, setSelectedGuildId] = React.useState<string | null>(null);
-  const [selectedGuildName, setSelectedGuildName] = React.useState<string | null>(null);
-  const [selectedGuildIcon, setSelectedGuildIcon] = React.useState<string | null>(null);
-
-  const { data: guilds, refetch: refetchGuilds } = trpc.player.getGuilds.useQuery(undefined, {
-    enabled: isAuthenticated(),
-  });
-
-  // Listen for bot-added messages from popup window
-  useEffect(() => {
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.data?.type === 'bot-added') {
-        console.log('[page] Bot added to guild:', event.data.guildId);
-        // Refresh guild list to get updated botInstalled status
-        const result = await refetchGuilds();
-        
-        // Find the guild that was just connected and navigate to it
-        const addedGuild = result.data?.find((g: Guild) => g.id === event.data.guildId);
-        if (addedGuild) {
-          handleSelectGuild(addedGuild.id, addedGuild.name, addedGuild.icon);
-        }
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [refetchGuilds]);
-
-  useEffect(() => {
-    // Check for token in URL (from OAuth callback)
-    const token = searchParams.get("token");
-    
-    if (token) {
-      // Store token and clean URL
-      setToken(token);
-      window.history.replaceState({}, "", "/");
-      setIsChecking(false);
-      setUsername(getUsername());
-      setAvatar(getAvatar());
-      setDiscordUserId(getDiscordUserId());
-    } else if (!isAuthenticated()) {
-      // Redirect to login if not authenticated
-      router.push("/login");
-    } else {
-      // Already authenticated
-      setIsChecking(false);
-      setUsername(getUsername());
-      setAvatar(getAvatar());
-      setDiscordUserId(getDiscordUserId());
-    }
-  }, [searchParams, router]);
-
-  // Restore guild selection from URL path
-  useEffect(() => {
-    if (!guilds || guilds.length === 0 || pathname === "/") return;
-
-    const guildId = parseGuildPath(pathname);
-    if (!guildId) return;
-    
-    const matchedGuild = guilds.find((g: Guild) => g.id === guildId && g.botInstalled);
-    
-    if (matchedGuild) {
-      setSelectedGuildId(matchedGuild.id);
-      setSelectedGuildName(matchedGuild.name);
-      setSelectedGuildIcon(matchedGuild.icon || null);
-    }
-  }, [guilds, pathname]);
-
-  const handleLogout = () => {
-    clearToken();
-    router.push("/login");
-  };
-
-  const handleSelectGuild = (guildId: string, guildName: string, guildIcon?: string) => {
-    setSelectedGuildId(guildId);
-    setSelectedGuildName(guildName);
-    setSelectedGuildIcon(guildIcon || null);
-    
-    // Push guild slug-id to URL path
-    router.push(createGuildPath(guildName, guildId));
-  };
+  const { isLoading, user, logout } = useAuth();
+  const { selectedGuild, selectGuild } = useGuildSelection();
 
   // Don't render anything while checking authentication
-  if (isChecking) {
+  if (isLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
         <div className="text-center">
@@ -121,10 +26,10 @@ function HomeContent() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">D E R E L I C T</h1>
-          {selectedGuildName ? (
+          {selectedGuild ? (
             <>
               <p className="text-xl text-gray-400 mb-2">
-                {selectedGuildName}
+                {selectedGuild.name}
               </p>
               <p className="text-sm text-gray-500">
                 Guild context active
@@ -145,14 +50,14 @@ function HomeContent() {
 
       {/* Top bar */}
       <TopBar
-        avatar={avatar}
-        discordUserId={discordUserId}
-        username={username}
-        onLogout={handleLogout}
-        onSelectGuild={handleSelectGuild}
-        selectedGuildName={selectedGuildName || undefined}
-        selectedGuildId={selectedGuildId}
-        selectedGuildIcon={selectedGuildIcon}
+        avatar={user.avatar}
+        discordUserId={user.discordUserId}
+        username={user.username}
+        onLogout={logout}
+        onSelectGuild={selectGuild}
+        selectedGuildName={selectedGuild?.name}
+        selectedGuildId={selectedGuild?.id || null}
+        selectedGuildIcon={selectedGuild?.icon || null}
       />
     </main>
   );
