@@ -143,46 +143,50 @@ function GuildPageContent() {
                     <p className="text-gray-400 text-sm">Loading channels...</p>
                   ) : channels && channels.length > 0 ? (
                     <>
-                      <div className="flex gap-2">
-                        <select
-                          value={selectedChannelId}
-                          onChange={(e) => setSelectedChannelId(e.target.value)}
-                          className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                          <option value="">Select a channel...</option>
-                          {channels.map((channel) => (
-                            <option key={channel.id} value={channel.id}>
-                              #{channel.name}
-                            </option>
-                          ))}
-                        </select>
-                        
-                        <button
-                          onClick={() => refetchChannels()}
-                          disabled={channelsFetching}
-                          className="px-3 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 transition-colors disabled:opacity-50"
-                          title="Refresh channel list"
-                        >
-                          {channelsFetching ? "⟳" : "↻"}
-                        </button>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <div className="flex gap-2 flex-1">
+                          <select
+                            value={selectedChannelId}
+                            onChange={(e) => setSelectedChannelId(e.target.value)}
+                            className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Select a channel...</option>
+                            {channels.map((channel) => (
+                              <option key={channel.id} value={channel.id}>
+                                #{channel.name}
+                              </option>
+                            ))}
+                          </select>
+                          
+                          <button
+                            onClick={() => refetchChannels()}
+                            disabled={channelsFetching}
+                            className="px-3 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 transition-colors disabled:opacity-50 flex-shrink-0"
+                            title="Refresh channel list"
+                          >
+                            {channelsFetching ? "⟳" : "↻"}
+                          </button>
+                        </div>
 
-                        <button
-                          onClick={handleSaveChannel}
-                          disabled={!selectedChannelId || setGameChannelMutation.isPending}
-                          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors whitespace-nowrap"
-                        >
-                          {setGameChannelMutation.isPending ? "Saving..." : "Set Game Channel"}
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            sendOminousMutation.mutate({ discordGuildId: guildId });
-                          }}
-                          disabled={!guild.gameChannelId || sendOminousMutation.isPending}
-                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors whitespace-nowrap"
-                        >
-                          Be Ominous
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleSaveChannel}
+                            disabled={!selectedChannelId || setGameChannelMutation.isPending}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors whitespace-nowrap"
+                          >
+                            {setGameChannelMutation.isPending ? "Saving..." : "Set Game Channel"}
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              sendOminousMutation.mutate({ discordGuildId: guildId });
+                            }}
+                            disabled={!guild.gameChannelId || sendOminousMutation.isPending}
+                            className="flex-1 sm:flex-none px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors whitespace-nowrap"
+                          >
+                            Be Ominous
+                          </button>
+                        </div>
                       </div>
                     </>
                   ) : (
