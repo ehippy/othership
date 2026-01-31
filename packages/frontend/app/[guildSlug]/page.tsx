@@ -40,6 +40,16 @@ function GuildPageContent() {
     },
   });
 
+  // Send ominous message mutation
+  const sendOminousMutation = trpc.guild.sendOminousMessage.useMutation({
+    onSuccess: () => {
+      // Silent success - message sent
+    },
+    onError: (error) => {
+      alert(`Failed to send message: ${error.message}`);
+    },
+  });
+
   // Auto-select #derelict channel if found
   React.useEffect(() => {
     if (channels && !selectedChannelId) {
@@ -154,6 +164,16 @@ function GuildPageContent() {
                           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors whitespace-nowrap"
                         >
                           {setGameChannelMutation.isPending ? "Saving..." : "Set Game Channel"}
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            sendOminousMutation.mutate({ discordGuildId: guildId });
+                          }}
+                          disabled={!guild.gameChannelId || sendOminousMutation.isPending}
+                          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors whitespace-nowrap"
+                        >
+                          Be Ominous
                         </button>
                       </div>
                     </>
