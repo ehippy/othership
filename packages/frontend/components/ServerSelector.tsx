@@ -3,6 +3,7 @@ import { trpc } from "@/lib/api/trpc";
 
 interface ServerSelectorProps {
   onClose: () => void;
+  onSelectGuild: (guildId: string, guildName: string, guildIcon?: string) => void;
 }
 
 interface Guild {
@@ -12,8 +13,15 @@ interface Guild {
   botInstalled?: boolean;
 }
 
-export function ServerSelector({ onClose }: ServerSelectorProps) {
+export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) {
   const { data: guilds, isLoading } = trpc.player.getGuilds.useQuery();
+
+  const handleSelectGuild = (guild: Guild) => {
+    if (guild.botInstalled) {
+      onSelectGuild(guild.id, guild.name, guild.icon);
+      onClose();
+    }
+  };
 
   const getGuildIconUrl = (guildId: string, iconHash: string | null): string => {
     if (!iconHash) {
@@ -72,7 +80,10 @@ export function ServerSelector({ onClose }: ServerSelectorProps) {
             .map((guild: Guild) => (
             <div
               key={guild.id}
-              className="flex items-center gap-3 p-3 bg-gray-700 rounded hover:bg-gray-650 transition-colors"
+              onClick={() => handleSelectGuild(guild)}
+              className={`flex items-center gap-3 p-3 bg-gray-700 rounded transition-colors ${
+                guild.botInstalled ? "cursor-pointer hover:bg-gray-600" : ""
+              }`}
             >
               {/* Server icon */}
               <img
