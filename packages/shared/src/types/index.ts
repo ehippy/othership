@@ -58,6 +58,7 @@ export interface Player {
   id: string;
   discordUserId: string;
   discordUsername: string;
+  discordAvatar?: string;
   gameId: string;
   activeCharacterId?: string;
   guilds?: DiscordGuild[];

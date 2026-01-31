@@ -6,14 +6,8 @@
 
 declare module "sst" {
   export interface Resource {
-    "AuthCallback": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
-    }
-    "AuthLogin": {
-      "name": string
-      "type": "sst.aws.Function"
+    "Api": {
+      "type": "sst.aws.ApiGatewayV2"
       "url": string
     }
     "DiscordApplicationId": {
@@ -48,11 +42,6 @@ declare module "sst" {
     "OthershipTable": {
       "name": string
       "type": "sst.aws.Dynamo"
-    }
-    "TrpcApi": {
-      "name": string
-      "type": "sst.aws.Function"
-      "url": string
     }
   }
 }

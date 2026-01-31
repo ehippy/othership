@@ -33,12 +33,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# SST
+.sst/
+sst-env.d.ts
+.open-next/
+.pulumi/
+
 # TypeScript
 *.tsbuildinfo
+next-env.d.ts
 
 # Misc
 .turbo
-
-# SST
-.sst/
-.sst-env

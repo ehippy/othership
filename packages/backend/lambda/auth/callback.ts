@@ -32,10 +32,19 @@ export async function handler(
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
   const code = event.queryStringParameters?.code;
+  const state = event.queryStringParameters?.state;
+
+  console.log("Auth callback invoked:", {
+    hasCode: !!code,
+    hasState: !!state,
+  });
 
   if (!code) {
     return {
       statusCode: 400,
+      headers: {
+        "Content-Type": "text/plain",
+      },
       body: "Missing authorization code",
     };
   }
@@ -52,12 +61,14 @@ export async function handler(
         client_secret: (Resource as any).DiscordClientSecret.value,
         grant_type: "authorization_code",
         code,
-        redirect_uri: (Resource as any).AuthCallback.url,
+        redirect_uri: `https://${event.requestContext.domainName}/auth/callback`,
       }),
     });
 
     if (!tokenResponse.ok) {
-      throw new Error("Failed to exchange code for token");
+      const errorBody = await tokenResponse.text();
+      console.error("Discord token exchange failed:", tokenResponse.status, errorBody);
+      throw new Error(`Failed to exchange code for token: ${tokenResponse.status} ${errorBody}`);
     }
 
     const tokens = (await tokenResponse.json()) as DiscordTokenResponse;
@@ -101,26 +112,45 @@ export async function handler(
       player = await playerService.createPlayer({
         discordUserId: user.id,
         discordUsername: user.username,
+        discordAvatar: user.avatar,
         gameId: "", // Empty gameId - player not in a game yet
       });
     }
 
     // Sign JWT
-    const token = signToken(player.id, user.id);
+    const token = signToken(player.id, user.id, user.username, user.avatar);
 
     // Redirect to frontend with token
-    const frontendUrl = (Resource as any).Frontend?.url || process.env.FRONTEND_URL || "http://localhost:3000";
+    // Decode the frontend URL from the state parameter
+    let frontendUrl = "http://localhost:3002"; // Fallback
+    if (state) {
+      try {
+        frontendUrl = Buffer.from(state, "base64").toString("utf-8");
+      } catch (e) {
+        console.error("Failed to decode state parameter:", e);
+      }
+    }
     
-    return {
+    console.log("Redirecting to frontend, duh:", `${frontendUrl}/?token=...`);
+    
+    const response: APIGatewayProxyResultV2 = {
       statusCode: 302,
       headers: {
-        Location: `${frontendUrl}/?token=${token}`,
+        "Location": `${frontendUrl}/?token=${token}`,
       },
+      body: "",
     };
+    
+    console.log("Response being returned:", JSON.stringify(response));
+    
+    return response;
   } catch (error) {
     console.error("OAuth callback error:", error);
     return {
       statusCode: 500,
+      headers: {
+        "Content-Type": "text/plain",
+      },
       body: "Authentication failed",
     };
   }

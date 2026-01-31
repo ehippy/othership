@@ -9,6 +9,7 @@ export const playerService = {
   async createPlayer(params: {
     discordUserId: string;
     discordUsername: string;
+    discordAvatar?: string;
     gameId: string;
   }): Promise<Player> {
     const id = ulid();
@@ -17,6 +18,7 @@ export const playerService = {
       id,
       discordUserId: params.discordUserId,
       discordUsername: params.discordUsername,
+      discordAvatar: params.discordAvatar,
       gameId: params.gameId,
     }).go();
 

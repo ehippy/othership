@@ -224,10 +224,13 @@ pnpm typecheck
 - E2E test critical user flows
 
 ### Deployment
-- Frontend: Static export to AWS CloudFront + S3
-- Backend: Lambda functions via AWS SAM or Serverless Framework
+- **Infrastructure:** SST Ion (`sst.config.ts`)
+- **Dev:** `pnpm dev` (runs `sst dev --stage dev`)
+- **Deploy:** `pnpm deploy` (runs `sst deploy --stage dev`)
+- Frontend: Next.js deployed via `sst.aws.Nextjs`
+- Backend: Lambda functions via `sst.aws.Function`
 - Database: DynamoDB (single table design)
-- Discord Bot: Long-running Lambda or ECS container
+- Discord Bot: Lambda function with Discord interactions
 
 ## Common Patterns
 

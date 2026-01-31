@@ -6,17 +6,21 @@ const JWT_EXPIRY = "7d";
 export interface TokenPayload {
   playerId: string;
   discordUserId: string;
+  discordUsername: string;
+  discordAvatar?: string;
 }
 
 /**
  * Sign a JWT token for a player
  */
-export function signToken(playerId: string, discordUserId: string): string {
+export function signToken(playerId: string, discordUserId: string, discordUsername: string, discordAvatar?: string): string {
   const secret = (Resource as any).JwtSecret.value;
   
   const payload: TokenPayload = {
     playerId,
     discordUserId,
+    discordUsername,
+    discordAvatar,
   };
 
   return jwt.sign(payload, secret, {

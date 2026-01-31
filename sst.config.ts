@@ -47,80 +47,68 @@ export default $config({
       },
     });
 
-    // tRPC API for web UI
-    const api = new sst.aws.Function("TrpcApi", {
-      handler: "packages/backend/lambda/api/handler.handler",
-      link: [table, discordBotToken, jwtSecret],
-      url: true, // Enable Function URL
-      timeout: "30 seconds",
-      memory: "512 MB",
-      logging: {
-        retention: "7 days", // Keep logs for 1 week only
-      },
-    });
+    // API Gateway V2 for all HTTP endpoints
+    const api = new sst.aws.ApiGatewayV2("Api");
 
-    // Discord Interactions webhook handler
-    const discordWebhook = new sst.aws.Function("DiscordWebhook", {
-      handler: "packages/backend/lambda/discord/interactions.handler",
-      link: [table, discordBotToken, discordPublicKey],
-      url: true, // Enable Function URL
-      timeout: "10 seconds",
-      memory: "512 MB",
-      logging: {
-        retention: "7 days",
-      },
-    });
-
-    // Auth callback handler
-    const authCallback = new sst.aws.Function("AuthCallback", {
-      handler: "packages/backend/lambda/auth/callback.handler",
-      link: [
-        table,
-        discordApplicationId,
-        discordClientSecret,
-        jwtSecret,
-      ],
-      url: {
-        authorization: "none",
-      },
-      timeout: "10 seconds",
-      memory: "512 MB",
-      logging: {
-        retention: "7 days",
-      },
-    });
-
-    // Auth login handler
-    const authLogin = new sst.aws.Function("AuthLogin", {
-      handler: "packages/backend/lambda/auth/login.handler",
-      link: [discordApplicationId],
-      url: {
-        authorization: "none",
-      },
-      timeout: "10 seconds",
-      memory: "256 MB",
-      logging: {
-        retention: "7 days",
-      },
-      environment: {
-        AUTH_CALLBACK_URL: authCallback.url,
-      },
-    });
-
-    // Deploy Next.js frontend
+    // Deploy Next.js frontend (defined early so we can reference it)
     const frontend = new sst.aws.Nextjs("Frontend", {
       path: "packages/frontend",
       environment: {
-        NEXT_PUBLIC_API_URL: api.url,
-        NEXT_PUBLIC_AUTH_LOGIN_URL: authLogin.url,
+        NEXT_PUBLIC_API_URL: $interpolate`${api.url}/trpc`,
+        NEXT_PUBLIC_AUTH_LOGIN_URL: $interpolate`${api.url}/auth/login`,
+      },
+    });
+    
+    // tRPC API routes
+    api.route("ANY /trpc/{proxy+}", {
+      handler: "packages/backend/lambda/api/handler.handler",
+      link: [table, discordBotToken, jwtSecret],
+      timeout: "30 seconds",
+      memory: "512 MB",
+      logging: {
+        retention: "1 week",
+      },
+    });
+
+    // Auth routes
+    api.route("GET /auth/login", {
+      handler: "packages/backend/lambda/auth/login.handler",
+      link: [discordApplicationId],
+      timeout: "10 seconds",
+      memory: "256 MB",
+      logging: {
+        retention: "1 week",
+      },
+    });
+
+    api.route("GET /auth/callback", {
+      handler: "packages/backend/lambda/auth/callback.handler",
+      link: [table, discordApplicationId, discordClientSecret, jwtSecret],
+      timeout: "10 seconds",
+      memory: "512 MB",
+      logging: {
+        retention: "1 week",
+      },
+      environment: {
+        FRONTEND_URL: frontend.url,
+      },
+    });
+
+    // Discord Interactions webhook handler (still uses Function URL for Discord's webhook)
+    const discordWebhook = new sst.aws.Function("DiscordWebhook", {
+      handler: "packages/backend/lambda/discord/interactions.handler",
+      link: [table, discordBotToken, discordPublicKey],
+      url: true,
+      timeout: "10 seconds",
+      memory: "512 MB",
+      logging: {
+        retention: "1 week",
       },
     });
 
     return {
       api: api.url,
       discordWebhook: discordWebhook.url,
-      authLogin: authLogin.url,
-      authCallback: authCallback.url,
       frontend: frontend.url,
       table: table.name,
     };
