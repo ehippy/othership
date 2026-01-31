@@ -161,6 +161,15 @@ export const guildRouter = router({
         input.optedIn
       );
       
+      // Post notification to game channel if configured
+      const guildRecord = await guildService.getGuildByDiscordId(input.discordGuildId);
+      if (guildRecord?.gameChannelId) {
+        const message = input.optedIn
+          ? `👁️ <@${input.playerId}> steps into the shadows. (opted in to play)`
+          : `💀 <@${input.playerId}> retreats into the void. We'll meet again soon. (opted out)`;
+        await postToChannel(guildRecord.gameChannelId, message);
+      }
+      
       console.log("[guild.setOptIn] Opt-in status updated successfully");
       return updatedMembership;
     }),
