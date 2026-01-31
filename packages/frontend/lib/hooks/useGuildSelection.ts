@@ -22,7 +22,7 @@ export function useGuildSelection() {
   const pathname = usePathname();
   const [selectedGuild, setSelectedGuild] = useState<SelectedGuild | null>(null);
 
-  const { data: guilds, refetch: refetchGuilds } = trpc.player.getGuilds.useQuery(undefined, {
+  const { data: guilds, refetch: refetchGuilds, isLoading: guildsLoading } = trpc.player.getGuilds.useQuery(undefined, {
     enabled: isAuthenticated(),
   });
 

@@ -14,6 +14,11 @@ function GuildPageContent() {
   const { isLoading: authLoading, user, logout } = useAuth();
   const { selectedGuild, selectGuild, guilds } = useGuildSelection();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
+  
+  // Check if guilds are still loading
+  const { isLoading: guildsLoading } = trpc.player.getGuilds.useQuery(undefined, {
+    enabled: !authLoading,
+  });
 
   // Parse guild ID from slug
   const guildId = parseGuildPath(`/${params.guildSlug}`);
@@ -74,7 +79,8 @@ function GuildPageContent() {
     });
   };
 
-  if (authLoading || guildLoading) {
+  // Show loading while auth or guilds are loading
+  if (authLoading || (guildsLoading && !guilds)) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
         <div className="text-center">
@@ -84,7 +90,11 @@ function GuildPageContent() {
     );
   }
 
-  if (!guild) {
+  // Use cached guild data for immediate render, guild.get data for gameChannelId
+  const displayGuild = userGuild || guild;
+  
+  // Only show "not found" if guilds have loaded and guild is still missing
+  if (!displayGuild && !guildsLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
         <div className="text-center">
@@ -94,12 +104,26 @@ function GuildPageContent() {
     );
   }
 
+  const getGuildIconUrl = (guildId: string, iconHash: string | null | undefined): string => {
+    if (!iconHash) {
+      return `https://cdn.discordapp.com/embed/avatars/0.png`;
+    }
+    return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.png?size=128`;
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pt-16">
       {/* Main content area */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-4">{guild.name}</h1>
+          <div className="flex items-center gap-4 mb-8">
+            <img 
+              src={getGuildIconUrl(displayGuild.id, displayGuild.icon)} 
+              alt={displayGuild.name}
+              className="w-20 h-20 rounded-full border-2 border-indigo-500"
+            />
+            <h1 className="text-4xl font-bold">{displayGuild.name}</h1>
+          </div>
 
           {/* Player Roster */}
           <div className="mb-8">
@@ -113,7 +137,7 @@ function GuildPageContent() {
           {/* Game content area */}
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
             <p className="text-gray-400">
-              {guild.gameChannelId
+              {guild?.gameChannelId
                 ? "Ready to play! Game content coming soon..."
                 : userGuild?.canManage
                 ? "Configure a game channel below to get started."
@@ -134,7 +158,7 @@ function GuildPageContent() {
                     <label className="block text-sm font-medium text-gray-300">
                       Game Channel
                     </label>
-                    {guild.gameChannelId ? (
+                    {guild?.gameChannelId ? (
                       <span className="text-xs text-green-400">
                         ✓ Configured
                       </span>

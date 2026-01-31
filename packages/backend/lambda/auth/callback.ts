@@ -105,7 +105,6 @@ export async function handler(
     }
 
     const guilds = (await guildsResponse.json()) as DiscordGuild[];
-    console.log(`[OAuth callback] User has ${guilds.length} Discord guilds`);
 
     // Fetch Guild records to get botInstalled status
     const { guildService } = await import("../../db/services");
@@ -118,9 +117,6 @@ export async function handler(
         }
       })
     );
-    console.log(`[OAuth callback] Found ${guildRecords.filter(g => g !== null).length} Guild records in DB`);
-    const installedCount = guildRecords.filter(g => g !== null && g.botInstalled).length;
-    console.log(`[OAuth callback] ${installedCount} guilds have bot installed`);
     const guildStatusMap = new Map(guildRecords.filter(g => g !== null).map(g => [g!.discordGuildId, g!.botInstalled]));
 
     // Map guilds to the format expected by our database (include permissions for access control)

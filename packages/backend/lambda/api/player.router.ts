@@ -12,21 +12,13 @@ export const playerRouter = router({
    * Get current player's guilds with bot installation status and permissions
    */
   getGuilds: protectedProcedure.query(async ({ ctx }): Promise<Array<DiscordGuild & { canManage: boolean; botInstalled: boolean; optedIn: boolean }>> => {
-    console.log("[player.getGuilds] Starting query");
-    console.log("[player.getGuilds] Context playerId:", ctx.playerId);
-    console.log("[player.getGuilds] User discordUserId:", ctx.user.discordUserId);
-    
     try {
       const guildsWithPermissions = await playerService.getPlayerGuildsWithPermissions(ctx.playerId);
-      console.log("[player.getGuilds] Guilds with permissions:", guildsWithPermissions.length);
 
       // Fetch all memberships for this player in ONE query
       const discordUserId = ctx.user.discordUserId;
-      console.log("[player.getGuilds] Fetching memberships for discordUserId:", discordUserId);
       const memberships = await guildMembershipService.getPlayerMemberships(discordUserId);
-      console.log("[player.getGuilds] Memberships found:", memberships.length);
       const membershipMap = new Map(memberships.map(m => [m.guildId, m.optedIn]));
-      console.log("[player.getGuilds] Membership map created with", membershipMap.size, "entries");
 
       // Bot installation status is now denormalized in Player.guilds - no need to query Guild table
       const guildsWithStatus = guildsWithPermissions.map((guild) => ({
@@ -35,11 +27,9 @@ export const playerRouter = router({
         optedIn: membershipMap.get(guild.id) ?? false,
       }));
 
-      console.log("[player.getGuilds] Success, returning", guildsWithStatus.length, "guilds");
       return guildsWithStatus;
     } catch (error) {
-      console.error("[player.getGuilds] Fatal error:", error);
-      console.error("[player.getGuilds] Error stack:", error instanceof Error ? error.stack : 'No stack');
+      console.error("[player.getGuilds] Error:", error);
       throw error;
     }
   }),
