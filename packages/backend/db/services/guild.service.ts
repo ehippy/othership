@@ -125,6 +125,22 @@ export class GuildService {
 
     return await this.createGuild(data);
   }
+
+  /**
+   * Set the game channel for a guild
+   */
+  async setGameChannel(discordGuildId: string, channelId: string) {
+    const guild = await this.getGuildByDiscordId(discordGuildId);
+    if (!guild) {
+      throw new Error(`Guild not found: ${discordGuildId}`);
+    }
+
+    const result = await GuildEntity.patch({ id: guild.id })
+      .set({ gameChannelId: channelId })
+      .go();
+
+    return result.data;
+  }
 }
 
 export const guildService = new GuildService();

@@ -34,6 +34,10 @@ export const GuildEntity = new Entity(
         type: 'string',
         required: false,
       },
+      gameChannelId: {
+        type: 'string',
+        required: false,
+      },
       createdAt: {
         type: 'string',
         required: true,
