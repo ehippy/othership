@@ -42,7 +42,6 @@
 
 ### Monorepo Structure
 ```
-game/
 ├── packages/
 │   ├── frontend/     # Next.js web application
 │   ├── backend/      # Discord bot + Lambda functions
@@ -199,9 +198,9 @@ pnpm typecheck
 - `ideas/reference/` - Mothership RPG reference materials
 
 ### Implementation
-- `game/packages/frontend/` - Next.js application
-- `game/packages/backend/` - Discord bot and Lambda functions
-- `game/packages/shared/` - Shared TypeScript types and game logic
+- `packages/frontend/` - Next.js application
+- `packages/backend/` - Discord bot and Lambda functions
+- `packages/shared/` - Shared TypeScript types and game logic
 
 ## Working with This Codebase
 
