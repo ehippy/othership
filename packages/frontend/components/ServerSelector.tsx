@@ -151,7 +151,7 @@ export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) 
                 </div>
               </div>
 
-              {/* Add bot button or Permission message */}
+              {/* Add bot button or help icon */}
               {!guild.botInstalled && guild.canManage ? (
                 <button
                   onClick={(e) => {
@@ -165,12 +165,12 @@ export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) 
               ) : !guild.botInstalled ? (
                 <a
                   href="/faq#how-to-add-bot"
-                  target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="px-2 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 text-right underline"
+                  className="flex items-center justify-center w-7 h-7 bg-gray-600 hover:bg-gray-500 text-gray-300 rounded-full text-sm transition-colors"
+                  title="Ask your server admin to add the bot"
                 >
-                  Ask your<br/>server admin
+                  🔒
                 </a>
               ) : null}
             </div>

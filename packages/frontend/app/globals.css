@@ -27,6 +27,28 @@ body {
     rgb(var(--background-start-rgb));
 }
 
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 2rem; /* Account for fixed header */
+}
+
+/* Target highlight for FAQ sections */
+:target {
+  animation: highlight 2s ease-in-out;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(99, 102, 241, 0.2);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
 /* Canvas container styles for Pixi.js */
 .game-canvas-container {
   position: relative;

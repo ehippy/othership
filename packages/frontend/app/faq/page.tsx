@@ -39,9 +39,10 @@ function FAQContent() {
 
             <FAQSection id="how-to-add-bot" question="How do I add the bot to my Discord server?">
               <p>
-                Only server administrators can add the DERELICT bot. If you see "Ask your server admin" 
+                Only server administrators can add the DERELICT bot. If you see a 🔒 lock icon 
                 when browsing servers, you'll need to request that someone with admin permissions adds the bot.
               </p>
+              <p>You could also create your own Discord server and add the bot there to try it out!</p>
               <p>
                 <strong>If you're an admin:</strong>
               </p>
