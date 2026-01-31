@@ -61,7 +61,14 @@ export function ServerSelector({ onClose }: ServerSelectorProps) {
       {!isLoading && guilds && (
         <div className="space-y-2">
           {[...guilds]
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => {
+              // Connected servers first
+              if (a.botInstalled !== b.botInstalled) {
+                return b.botInstalled ? 1 : -1;
+              }
+              // Then alphabetically
+              return a.name.localeCompare(b.name);
+            })
             .map((guild: Guild) => (
             <div
               key={guild.id}

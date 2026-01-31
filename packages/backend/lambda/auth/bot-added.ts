@@ -66,9 +66,11 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
       statusCode: 200,
       headers: { "Content-Type": "text/html" },
       body: `
+        <!DOCTYPE html>
         <html>
           <head>
-            <title>Bot Added Successfully</title>
+            <meta charset="utf-8">
+            <title>Bot Added</title>
             <style>
               body {
                 font-family: system-ui, -apple-system, sans-serif;
@@ -77,40 +79,35 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
                 justify-content: center;
                 min-height: 100vh;
                 margin: 0;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(to bottom, #111827, #000000);
               }
               .container {
-                background: white;
-                padding: 3rem;
-                border-radius: 1rem;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
                 text-align: center;
-                max-width: 500px;
+                color: white;
               }
               h1 {
-                color: #2d3748;
+                font-size: 2rem;
                 margin-bottom: 1rem;
               }
-              p {
-                color: #4a5568;
-                margin-bottom: 2rem;
-              }
               .guild-name {
-                font-weight: bold;
-                color: #5a67d8;
+                color: #818cf8;
+                font-weight: 600;
+              }
+              p {
+                color: #9ca3af;
+                margin-top: 0.5rem;
               }
             </style>
             <script>
               setTimeout(() => {
                 window.close();
-              }, 3000);
+              }, 2000);
             </script>
           </head>
           <body>
             <div class="container">
-              <h1>🎉 Bot Added Successfully!</h1>
-              <p>Othership bot has been added to <span class="guild-name">${guildInfo.name}</span></p>
-              <p>This window will close automatically...</p>
+              <h1>Bot connected to <span class="guild-name">${guildInfo.name}</span></h1>
+              <p>This window will close automatically</p>
             </div>
           </body>
         </html>
