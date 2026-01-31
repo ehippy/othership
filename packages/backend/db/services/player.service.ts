@@ -23,6 +23,9 @@ export const playerService = {
     discordDisplayName?: string;
     discordAvatar?: string;
     gameId: string;
+    discordAccessToken?: string;
+    discordRefreshToken?: string;
+    discordTokenExpiresAt?: number;
   }): Promise<Player> {
     const id = ulid();
 
@@ -33,6 +36,9 @@ export const playerService = {
       discordDisplayName: params.discordDisplayName,
       discordAvatar: params.discordAvatar,
       gameId: params.gameId,
+      discordAccessToken: params.discordAccessToken,
+      discordRefreshToken: params.discordRefreshToken,
+      discordTokenExpiresAt: params.discordTokenExpiresAt,
     }).go();
 
     return result.data as Player;
@@ -101,7 +107,7 @@ export const playerService = {
    */
   async updateGuilds(
     playerId: string,
-    guilds: Array<{ id: string; name: string; icon?: string; permissions?: string }>
+    guilds: Array<{ id: string; name: string; icon?: string; permissions?: string; botInstalled?: boolean }>
   ): Promise<Player> {
     const result = await PlayerEntity.patch({ id: playerId })
       .set({ guilds })
@@ -113,7 +119,7 @@ export const playerService = {
   /**
    * Get player guilds with management permissions computed
    */
-  async getPlayerGuildsWithPermissions(playerId: string): Promise<Array<DiscordGuild & { canManage: boolean }>> {
+  async getPlayerGuildsWithPermissions(playerId: string): Promise<Array<DiscordGuild & { canManage: boolean; botInstalled: boolean }>> {
     const player = await PlayerEntity.get({ id: playerId }).go();
     if (!player.data) {
       return [];
@@ -129,6 +135,7 @@ export const playerService = {
       return {
         ...guild,
         canManage,
+        botInstalled: guild.botInstalled ?? false,
       };
     });
   },
@@ -253,7 +260,7 @@ export const playerService = {
   /**
    * Fetch fresh guilds from Discord API and update player record
    */
-  async refreshGuildsFromDiscord(playerId: string): Promise<Array<DiscordGuild & { canManage: boolean }>> {
+  async refreshGuildsFromDiscord(playerId: string): Promise<Array<DiscordGuild & { canManage: boolean; botInstalled: boolean }>> {
     const accessToken = await this.getValidDiscordToken(playerId);
     if (!accessToken) {
       console.error("[refreshGuildsFromDiscord] No valid access token available");
@@ -274,11 +281,25 @@ export const playerService = {
 
       const guilds = (await guildsResponse.json()) as DiscordGuildResponse[];
 
+      // Fetch Guild records to get botInstalled status
+      const guildRecords = await Promise.all(
+        guilds.map(async (guild) => {
+          try {
+            const { guildService } = await import("./guild.service");
+            return await guildService.getGuildByDiscordId(guild.id);
+          } catch {
+            return null;
+          }
+        })
+      );
+      const guildStatusMap = new Map(guildRecords.filter(g => g !== null).map(g => [g!.discordGuildId, g!.botInstalled]));
+
       const mappedGuilds: DiscordGuild[] = guilds.map(guild => ({
         id: guild.id,
         name: guild.name,
         icon: guild.icon || undefined,
         permissions: guild.permissions,
+        botInstalled: guildStatusMap.get(guild.id) ?? false,
       }));
 
       // Update player's guilds in database
@@ -293,6 +314,7 @@ export const playerService = {
         return {
           ...guild,
           canManage,
+          botInstalled: guild.botInstalled ?? false,
         };
       });
     } catch (error) {

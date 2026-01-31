@@ -85,6 +85,7 @@ export class GuildMembershipService {
           playerUsername,
           playerAvatar: playerAvatar || undefined,
           lastActiveAt: new Date().toISOString(),
+          optedIn: existing.optedIn, // Include optedIn for GSI key formatting
         })
         .go();
       return result.data;

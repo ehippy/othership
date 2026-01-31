@@ -53,6 +53,7 @@ export interface DiscordGuild {
   name: string;
   icon?: string;
   permissions?: string; // Discord permission bitfield
+  botInstalled?: boolean; // Whether Derelict bot is installed in this guild
 }
 
 export interface Player {

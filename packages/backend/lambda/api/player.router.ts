@@ -3,6 +3,7 @@ import { router, protectedProcedure } from "./trpc";
 import { playerService, guildService } from "../../db/services";
 import { guildMembershipService } from "../../db/services/guild-membership.service";
 import { Resource } from "sst";
+import type { DiscordGuild } from "@derelict/shared";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
 
@@ -10,7 +11,7 @@ export const playerRouter = router({
   /**
    * Get current player's guilds with bot installation status and permissions
    */
-  getGuilds: protectedProcedure.query(async ({ ctx }) => {
+  getGuilds: protectedProcedure.query(async ({ ctx }): Promise<Array<DiscordGuild & { canManage: boolean; botInstalled: boolean; optedIn: boolean }>> => {
     console.log("[player.getGuilds] Starting query");
     console.log("[player.getGuilds] Context playerId:", ctx.playerId);
     console.log("[player.getGuilds] User discordUserId:", ctx.user.discordUserId);
@@ -27,27 +28,12 @@ export const playerRouter = router({
       const membershipMap = new Map(memberships.map(m => [m.guildId, m.optedIn]));
       console.log("[player.getGuilds] Membership map created with", membershipMap.size, "entries");
 
-      // Fetch bot installation status for each guild
-      const guildsWithStatus = await Promise.all(
-        guildsWithPermissions.map(async (guild) => {
-          try {
-            const guildRecord = await guildService.getGuildByDiscordId(guild.id);
-            
-            return {
-              ...guild,
-              botInstalled: guildRecord?.botInstalled ?? false,
-              optedIn: membershipMap.get(guild.id) ?? false,
-            };
-          } catch (error) {
-            console.error(`[player.getGuilds] Error checking guild ${guild.id}:`, error);
-            return {
-              ...guild,
-              botInstalled: false,
-              optedIn: false,
-            };
-          }
-        })
-      );
+      // Bot installation status is now denormalized in Player.guilds - no need to query Guild table
+      const guildsWithStatus = guildsWithPermissions.map((guild) => ({
+        ...guild,
+        botInstalled: guild.botInstalled ?? false, // Read from denormalized field
+        optedIn: membershipMap.get(guild.id) ?? false,
+      }));
 
       console.log("[player.getGuilds] Success, returning", guildsWithStatus.length, "guilds");
       return guildsWithStatus;

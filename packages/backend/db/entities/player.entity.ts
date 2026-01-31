@@ -47,6 +47,7 @@ export const PlayerEntity = new Entity(
             name: { type: "string" },
             icon: { type: "string" },
             permissions: { type: "string" },
+            botInstalled: { type: "boolean" },
           },
         },
         required: false,
