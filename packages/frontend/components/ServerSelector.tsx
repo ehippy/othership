@@ -146,17 +146,13 @@ export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) 
                     {guild.botInstalled ? "✓ Connected" : "Not connected"}
                   </span>
                   {guild.canManage && (
-                    <span className="text-yellow-500">Admin</span>
+                    <span className="badge-admin">Admin</span>
                   )}
                 </div>
               </div>
 
-              {/* Add bot button or Connected badge or Permission message */}
-              {guild.botInstalled ? (
-                <div className="px-3 py-1.5 bg-green-600 text-white text-sm rounded">
-                  Connected
-                </div>
-              ) : guild.canManage ? (
+              {/* Add bot button or Permission message */}
+              {!guild.botInstalled && guild.canManage ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -166,11 +162,17 @@ export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) 
                 >
                   Add Bot
                 </button>
-              ) : (
-                <div className="px-2 py-1.5 text-xs text-gray-400 text-right">
+              ) : !guild.botInstalled ? (
+                <a
+                  href="/faq#how-to-add-bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-2 py-1.5 text-xs text-indigo-400 hover:text-indigo-300 text-right underline"
+                >
                   Ask your<br/>server admin
-                </div>
-              )}
+                </a>
+              ) : null}
             </div>
           ))}
 

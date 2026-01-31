@@ -124,7 +124,7 @@ function GuildPageContent() {
           {/* Admin Panel */}
           {userGuild?.canManage && (
             <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-semibold mb-4 text-yellow-500">
+              <h2 className="section-title-admin">
                 Admin Settings
               </h2>
               
@@ -139,7 +139,7 @@ function GuildPageContent() {
                         ✓ Configured
                       </span>
                     ) : (
-                      <span className="text-xs text-yellow-400">
+                      <span className="badge-warning">
                         ⚠ Not configured
                       </span>
                     )}

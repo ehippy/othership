@@ -47,6 +47,13 @@ export function TopBar({ avatar, discordUserId, username, onLogout, onSelectGuil
       {showUserMenu && (
         <div className="fixed top-20 right-4 z-50">
           <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-2 w-48">
+            <Link
+              href="/faq"
+              className="block w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 rounded transition-colors text-sm"
+              onClick={() => setShowUserMenu(false)}
+            >
+              FAQ
+            </Link>
             <button
               onClick={() => {
                 onLogout();

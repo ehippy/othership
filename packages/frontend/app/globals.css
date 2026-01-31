@@ -6,6 +6,15 @@
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 17, 24, 39;
   --background-end-rgb: 0, 0, 0;
+  
+  /* Semantic colors */
+  --color-admin: rgb(234, 179, 8); /* yellow-500 */
+  --color-admin-dark: rgb(202, 138, 4); /* yellow-600 */
+  --color-warning: rgb(250, 204, 21); /* yellow-400 */
+  --color-success: rgb(74, 222, 128); /* green-400 */
+  --color-danger: rgb(239, 68, 68); /* red-500 */
+  --color-primary: rgb(99, 102, 241); /* indigo-500 */
+  --color-primary-hover: rgb(79, 70, 229); /* indigo-600 */
 }
 
 body {
@@ -30,4 +39,55 @@ canvas {
   display: block;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+/* Common component styles */
+@layer components {
+  .card {
+    @apply bg-gray-800 border border-gray-700 rounded-lg p-6;
+  }
+
+  .card-title {
+    @apply text-2xl font-semibold mb-4 text-indigo-400;
+  }
+
+  .text-body {
+    @apply text-gray-300 leading-relaxed;
+  }
+
+  .badge-admin {
+    color: var(--color-admin);
+    @apply text-xs font-medium;
+  }
+
+  .badge-warning {
+    color: var(--color-warning);
+    @apply text-xs;
+  }
+
+  .badge-success {
+    color: var(--color-success);
+    @apply text-xs;
+  }
+
+  .section-title-admin {
+    color: var(--color-admin);
+    @apply text-2xl font-semibold mb-4;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed whitespace-nowrap;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed whitespace-nowrap;
+  }
+
+  .btn-success {
+    @apply px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed whitespace-nowrap;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 rounded text-gray-300 transition-colors disabled:opacity-50;
+  }
 }
