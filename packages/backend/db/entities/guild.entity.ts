@@ -6,7 +6,7 @@ export const GuildEntity = new Entity(
     model: {
       entity: 'Guild',
       version: '1',
-      service: 'othership',
+      service: 'derelict',
     },
     attributes: {
       id: {

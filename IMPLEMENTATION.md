@@ -1,4 +1,4 @@
-# Othership - Backend Implementation Complete! 🚀
+# Derelict - Backend Implementation Complete! 🚀
 
 ## What's Been Built
 

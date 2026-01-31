@@ -1,6 +1,6 @@
 import { httpBatchLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
-import type { AppRouter } from "@othership/backend";
+import type { AppRouter } from "@derelict/backend";
 import { getToken } from "../auth";
 
 // Create tRPC React hooks

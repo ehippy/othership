@@ -29,12 +29,12 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.980.0
         version: 3.980.0(@aws-sdk/client-dynamodb@3.980.0)
+      '@derelict/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@noble/ed25519':
         specifier: ^3.0.0
         version: 3.0.0
-      '@othership/shared':
-        specifier: workspace:*
-        version: link:../shared
       '@trpc/server':
         specifier: ^11.9.0
         version: 11.9.0(typescript@5.9.3)
@@ -93,10 +93,10 @@ importers:
 
   packages/frontend:
     dependencies:
-      '@othership/backend':
+      '@derelict/backend':
         specifier: workspace:*
         version: link:../backend
-      '@othership/shared':
+      '@derelict/shared':
         specifier: workspace:*
         version: link:../shared
       '@pixi/react':

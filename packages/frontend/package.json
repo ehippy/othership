@@ -1,8 +1,8 @@
 {
-  "name": "@othership/frontend",
+  "name": "@derelict/frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Next.js web application for Othership",
+  "description": "Next.js web application for Derelict",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,8 +13,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@othership/backend": "workspace:*",
-    "@othership/shared": "workspace:*",
+    "@derelict/backend": "workspace:*",
+    "@derelict/shared": "workspace:*",
     "@pixi/react": "^7.1.2",
     "@tanstack/react-query": "^5.90.20",
     "@trpc/client": "^11.9.0",

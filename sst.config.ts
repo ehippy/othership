@@ -3,7 +3,7 @@
 export default $config({
   app(input) {
     return {
-      name: "othership",
+      name: "derelict",
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
     };
@@ -19,7 +19,7 @@ export default $config({
     const jwtSecret = new sst.Secret("JwtSecret");
 
     // DynamoDB table for all game state (single-table design)
-    const table = new sst.aws.Dynamo("OthershipTable", {
+    const table = new sst.aws.Dynamo("DerelictTable", {
       fields: {
         pk: "string",
         sk: "string",

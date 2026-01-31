@@ -1,6 +1,6 @@
-# Othership - Game Implementation
+# Derelict - Game Implementation
 
-This is the main implementation directory for Othership, organized as a pnpm monorepo.
+This is the main implementation directory for Derelict, organized as a pnpm monorepo.
 
 ## Project Structure
 
@@ -63,7 +63,7 @@ pnpm test:watch
 
 ## Package Overview
 
-### @othership/frontend
+### @derelict/frontend
 
 Next.js application with Pixi.js game rendering. Provides the web-based UI for players to visualize and interact with the game.
 
@@ -73,7 +73,7 @@ Next.js application with Pixi.js game rendering. Provides the web-based UI for p
 - Pixi.js 7
 - Tailwind CSS
 
-### @othership/backend
+### @derelict/backend
 
 Discord bot and AWS Lambda functions. Handles game commands, turn processing, and database interactions.
 
@@ -83,7 +83,7 @@ Discord bot and AWS Lambda functions. Handles game commands, turn processing, an
 - ElectroDB (DynamoDB ORM)
 - tRPC
 
-### @othership/shared
+### @derelict/shared
 
 Shared TypeScript types, game logic, and constants used across frontend and backend.
 

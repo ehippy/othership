@@ -1,4 +1,4 @@
-# Othership Backend Setup
+# Derelict Backend Setup
 
 ## Prerequisites
 

@@ -1,13 +1,13 @@
 import { Entity } from "electrodb";
 import { dynamoDb, getTableName } from "../client";
-import type { Character } from "@othership/shared";
+import type { Character } from "@derelict/shared";
 
 export const CharacterEntity = new Entity(
   {
     model: {
       entity: "character",
       version: "1",
-      service: "othership",
+      service: "derelict",
     },
     attributes: {
       id: {

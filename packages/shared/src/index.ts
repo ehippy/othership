@@ -1,4 +1,4 @@
-// Main exports for @othership/shared package
+// Main exports for @derelict/shared package
 
 export * from './types';
 export * from './constants';

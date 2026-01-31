@@ -1,6 +1,6 @@
 import { CharacterEntity } from "../entities";
 import { ulid } from "ulid";
-import type { Character, Stats, Saves, Position } from "@othership/shared";
+import type { Character, Stats, Saves, Position } from "@derelict/shared";
 
 export const characterService = {
   /**

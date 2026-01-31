@@ -17,7 +17,7 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>Othership - Cooperative Survival Horror in Space</title>
+        <title>D E R E L I C T</title>
         <meta name="description" content="A cooperative survival horror game set in space" />
         <link rel="icon" type="image/png" href="/assets/favicon.png" />
       </head>

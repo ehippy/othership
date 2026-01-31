@@ -1,4 +1,4 @@
-# Othership
+# Derelict
 
 Co-op browser survival horror. 
 

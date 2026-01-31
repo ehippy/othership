@@ -5,7 +5,7 @@ import { CharacterEntity } from "./character.entity";
 import { GuildEntity } from "./guild.entity";
 
 // Create ElectroDB service with all entities
-export const OthershipService = new Service({
+export const DerelictService = new Service({
   game: GameEntity,
   player: PlayerEntity,
   character: CharacterEntity,

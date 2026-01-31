@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { router, publicProcedure } from "./trpc";
 import { characterService, playerService } from "../../db/services";
-import { rollDie, rollCheck } from "@othership/shared";
+import { rollDie, rollCheck } from "@derelict/shared";
 
 export const characterRouter = router({
   // Create a new character

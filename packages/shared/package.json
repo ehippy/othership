@@ -1,8 +1,8 @@
 {
-  "name": "@othership/shared",
+  "name": "@derelict/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared types, game logic, and constants for Othership",
+  "description": "Shared types, game logic, and constants for Derelict",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {

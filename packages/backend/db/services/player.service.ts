@@ -1,6 +1,6 @@
 import { PlayerEntity } from "../entities";
 import { ulid } from "ulid";
-import type { Player } from "@othership/shared";
+import type { Player } from "@derelict/shared";
 
 export const playerService = {
   /**

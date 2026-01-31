@@ -20,4 +20,4 @@ export const dynamoDb = DynamoDBDocumentClient.from(dynamoClient, {
 });
 
 // Get table name from SST resource binding
-export const getTableName = () => Resource.OthershipTable.name;
+export const getTableName = () => Resource.DerelictTable.name;

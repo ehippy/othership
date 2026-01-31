@@ -1,4 +1,4 @@
-// Core type definitions for Othership
+// Core type definitions for Derelict
 
 export interface CharacterStats {
   strength: number;

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Othership** is a cooperative browser-based survival horror game set in space, inspired by FTL, Alien Isolation, and the Mothership tabletop RPG. The game integrates a Discord bot with a web-based UI to create a unique multiplayer turn-based survival experience.
+**Derelict** is a cooperative browser-based survival horror game set in space, inspired by FTL, Alien Isolation, and the Mothership tabletop RPG. The game integrates a Discord bot with a web-based UI to create a unique multiplayer turn-based survival experience.
 
 **Core Concept:**
 - Players coordinate through Discord chat and commands

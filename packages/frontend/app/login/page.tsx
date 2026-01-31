@@ -8,8 +8,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black">
       <div className="text-center">
-        <h1 className="text-6xl font-bold text-white mb-8">Othership</h1>
-        <p className="text-gray-400 mb-12">Co-op survival horror in space</p>
+        <h1 className="text-6xl font-bold text-white mb-8">D E R E L I C T</h1>
+        <p className="text-gray-400 mb-12">Co-op survival horror</p>
         
         {authLoginUrl ? (
           <a

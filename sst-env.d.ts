@@ -10,6 +10,10 @@ declare module "sst" {
       "type": "sst.aws.ApiGatewayV2"
       "url": string
     }
+    "DerelictTable": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
     "DiscordApplicationId": {
       "type": "sst.sst.Secret"
       "value": string
@@ -38,10 +42,6 @@ declare module "sst" {
     "JwtSecret": {
       "type": "sst.sst.Secret"
       "value": string
-    }
-    "OthershipTable": {
-      "name": string
-      "type": "sst.aws.Dynamo"
     }
   }
 }

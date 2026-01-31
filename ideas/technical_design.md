@@ -1,4 +1,4 @@
-# Othership Technical Design
+# Derelict Technical Design
 
 ## Tech Stack
 

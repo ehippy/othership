@@ -1,8 +1,8 @@
 {
-  "name": "@othership/backend",
+  "name": "@derelict/backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Discord bot and Lambda functions for Othership",
+  "description": "Discord bot and Lambda functions for Derelict",
   "main": "./dist/backend/index.js",
   "types": "./dist/backend/index.d.ts",
   "exports": {
@@ -23,7 +23,7 @@
     "@aws-sdk/client-dynamodb": "^3.980.0",
     "@aws-sdk/lib-dynamodb": "^3.980.0",
     "@noble/ed25519": "^3.0.0",
-    "@othership/shared": "workspace:*",
+    "@derelict/shared": "workspace:*",
     "@trpc/server": "^11.9.0",
     "discord.js": "^14.14.1",
     "electrodb": "^3.5.3",

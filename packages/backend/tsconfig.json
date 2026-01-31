@@ -15,8 +15,8 @@
     "sourceMap": true,
     "types": ["node"],
     "paths": {
-      "@othership/shared": ["../shared/src"],
-      "@othership/shared/*": ["../shared/src/*"]
+      "@derelict/shared": ["../shared/src"],
+      "@derelict/shared/*": ["../shared/src/*"]
     }
   },
   "include": ["**/*.ts"],

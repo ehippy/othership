@@ -97,7 +97,7 @@ function HomeContent() {
       {/* Main content area */}
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Othership</h1>
+          <h1 className="text-4xl font-bold mb-4">Derelict</h1>
           {selectedGuildName ? (
             <>
               <p className="text-xl text-gray-400 mb-2">

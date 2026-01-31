@@ -1,6 +1,6 @@
 import { GameEntity } from "../entities";
 import { ulid } from "ulid";
-import type { Game } from "@othership/shared";
+import type { Game } from "@derelict/shared";
 
 export const gameService = {
   /**

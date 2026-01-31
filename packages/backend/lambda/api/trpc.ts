@@ -1,7 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { verifyToken } from "../../lib/auth";
 import { playerService } from "../../db/services";
-import type { Player } from "@othership/shared";
+import type { Player } from "@derelict/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 
 // Context with authenticated user
