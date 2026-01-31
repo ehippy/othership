@@ -10,7 +10,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 60_000, // 1 minute - don't auto-refetch unless data is older than this
+        cacheTime: 5 * 60 * 1000, // 5 minutes - keep unused data in cache
+        refetchOnWindowFocus: false, // Stop refetching every time user tabs back
+        refetchOnReconnect: true, // Still refetch on network reconnect
+      },
+    },
+  }));
 
   return (
     <html lang="en">
