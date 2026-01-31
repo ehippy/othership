@@ -47,11 +47,21 @@ export function PlayerRoster({ guildId, currentUserId, canManage }: PlayerRoster
       }
       alert(`Failed to update opt-in status: ${error.message}`);
     },
-    onSettled: () => {
-      // Always refetch after error or success to ensure server state
+    onSettled: (data, error, variables) => {
+      // Always refetch roster after error or success to ensure server state
       utils.guild.getRoster.invalidate();
-      // Also invalidate player guilds so server selector updates
-      utils.player.getGuilds.invalidate();
+      
+      // Surgically update the guilds cache instead of full refetch
+      const currentGuilds = utils.player.getGuilds.getData();
+      if (currentGuilds && !error) {
+        utils.player.getGuilds.setData(undefined, 
+          currentGuilds.map(guild => 
+            guild.id === variables.discordGuildId
+              ? { ...guild, optedIn: variables.optedIn }
+              : guild
+          )
+        );
+      }
     },
   });
 
