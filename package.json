@@ -4,9 +4,9 @@
   "private": true,
   "description": "Cooperative browser-based survival horror game in space",
   "scripts": {
-    "dev": "sst dev",
+    "dev": "sst dev --stage dev",
     "build": "pnpm --filter './packages/*' build",
-    "deploy": "sst deploy",
+    "deploy": "sst deploy --stage dev",
     "test": "pnpm --filter './packages/*' test",
     "test:watch": "pnpm --filter './packages/*' test:watch",
     "lint": "pnpm --filter './packages/*' lint",

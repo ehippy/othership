@@ -6,6 +6,54 @@
 
 declare module "sst" {
   export interface Resource {
+    "AuthCallback": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "AuthLogin": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "DiscordApplicationId": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "DiscordBotToken": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "DiscordClientSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "DiscordPublicKey": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "DiscordWebhook": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
+    "Frontend": {
+      "type": "sst.aws.Nextjs"
+      "url": string
+    }
+    "JwtSecret": {
+      "type": "sst.sst.Secret"
+      "value": string
+    }
+    "OthershipTable": {
+      "name": string
+      "type": "sst.aws.Dynamo"
+    }
+    "TrpcApi": {
+      "name": string
+      "type": "sst.aws.Function"
+      "url": string
+    }
   }
 }
 /// <reference path="sst-env.d.ts" />
