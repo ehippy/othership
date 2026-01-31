@@ -105,20 +105,25 @@ export async function handler(
     
     let player;
     if (existingPlayers.length > 0) {
-      // Update existing player
-      player = existingPlayers[0];
-      // TODO: Add update method to playerService
+      // Update existing player with latest Discord info
+      player = await playerService.updatePlayer({
+        playerId: existingPlayers[0].id,
+        discordUsername: user.username,
+        discordDisplayName: user.global_name,
+        discordAvatar: user.avatar,
+      });
     } else {
       // Create new player without a game (they'll join later)
       player = await playerService.createPlayer({
         discordUserId: user.id,
-        discordUsername: user.global_name || user.username,
+        discordUsername: user.username,
+        discordDisplayName: user.global_name,
         discordAvatar: user.avatar,
         gameId: "", // Empty gameId - player not in a game yet
       });
     }
 
-    // Sign JWT
+    // Sign JWT (use display name if available, fallback to username)
     const token = signToken(player.id, user.id, user.global_name || user.username, user.avatar);
 
     // Redirect to frontend with token

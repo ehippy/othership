@@ -22,6 +22,10 @@ export const PlayerEntity = new Entity(
         type: "string",
         required: true,
       },
+      discordDisplayName: {
+        type: "string",
+        required: false,
+      },
       discordAvatar: {
         type: "string",
         required: false,

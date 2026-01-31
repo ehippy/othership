@@ -9,6 +9,7 @@ export const playerService = {
   async createPlayer(params: {
     discordUserId: string;
     discordUsername: string;
+    discordDisplayName?: string;
     discordAvatar?: string;
     gameId: string;
   }): Promise<Player> {
@@ -18,6 +19,7 @@ export const playerService = {
       id,
       discordUserId: params.discordUserId,
       discordUsername: params.discordUsername,
+      discordDisplayName: params.discordDisplayName,
       discordAvatar: params.discordAvatar,
       gameId: params.gameId,
     }).go();
@@ -92,6 +94,33 @@ export const playerService = {
   ): Promise<Player> {
     const result = await PlayerEntity.patch({ id: playerId })
       .set({ guilds })
+      .go();
+
+    return result.data as Player;
+  },
+
+  /**
+   * Update player Discord info (username and avatar)
+   */
+  async updatePlayer(params: {
+    playerId: string;
+    discordUsername?: string;
+    discordDisplayName?: string;
+    discordAvatar?: string;
+  }): Promise<Player> {
+    const updates: Record<string, any> = {};
+    if (params.discordUsername !== undefined) {
+      updates.discordUsername = params.discordUsername;
+    }
+    if (params.discordDisplayName !== undefined) {
+      updates.discordDisplayName = params.discordDisplayName;
+    }
+    if (params.discordAvatar !== undefined) {
+      updates.discordAvatar = params.discordAvatar;
+    }
+
+    const result = await PlayerEntity.patch({ id: params.playerId })
+      .set(updates)
       .go();
 
     return result.data as Player;
