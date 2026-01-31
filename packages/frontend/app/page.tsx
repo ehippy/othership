@@ -116,7 +116,7 @@ function HomeContent() {
                 Cooperative survival horror in space
               </p>
               <p className="mt-8 text-sm text-gray-500">
-                Select a server from the dock below to get started
+                Select a server to get started
               </p>
             </>
           )}
