@@ -18,7 +18,7 @@ function GuildPageContent() {
   const guildId = parseGuildPath(`/${params.guildSlug}`);
 
   // Fetch guild data
-  const { data: guild, isLoading: guildLoading } = trpc.guild.get.useQuery(
+  const { data: guild, isLoading: guildLoading, refetch: refetchGuild } = trpc.guild.get.useQuery(
     { discordGuildId: guildId || "" },
     { enabled: !!guildId }
   );
@@ -33,7 +33,7 @@ function GuildPageContent() {
   // Set game channel mutation
   const setGameChannelMutation = trpc.guild.setGameChannel.useMutation({
     onSuccess: () => {
-      alert("Game channel set successfully!");
+      refetchGuild();
     },
     onError: (error) => {
       alert(`Failed to set game channel: ${error.message}`);
@@ -124,12 +124,20 @@ function GuildPageContent() {
                     <label className="block text-sm font-medium text-gray-300">
                       Game Channel
                     </label>
-                    {guild.gameChannelId && (
+                    {guild.gameChannelId ? (
                       <span className="text-xs text-green-400">
                         ✓ Configured
                       </span>
+                    ) : (
+                      <span className="text-xs text-yellow-400">
+                        ⚠ Not configured
+                      </span>
                     )}
                   </div>
+                  
+                  <p className="text-sm text-gray-400 mb-3">
+                    Please select the Discord channel your game will be run in. We suggest creating a channel called <span className="text-indigo-400">#derelict</span> for this purpose.
+                  </p>
                   
                   {channelsLoading ? (
                     <p className="text-gray-400 text-sm">Loading channels...</p>
