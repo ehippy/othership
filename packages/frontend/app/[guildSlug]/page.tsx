@@ -118,6 +118,17 @@ function GuildPageContent() {
     return `https://cdn.discordapp.com/icons/${guildId}/${iconHash}.png?size=128`;
   };
 
+  // Don't render until we have guild data
+  if (!displayGuild) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
+        <div className="text-center">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pt-16">
       {/* Main content area */}
@@ -210,7 +221,9 @@ function GuildPageContent() {
                         </button>
                         <button
                           onClick={() => {
-                            sendOminousMutation.mutate({ discordGuildId: guildId });
+                            if (guildId) {
+                              sendOminousMutation.mutate({ discordGuildId: guildId });
+                            }
                           }}
                           disabled={sendOminousMutation.isPending}
                           className="px-3 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors text-sm"

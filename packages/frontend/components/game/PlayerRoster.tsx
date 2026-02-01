@@ -123,7 +123,7 @@ export function PlayerRoster({ guildId, currentUserId, canManage }: PlayerRoster
             >
               <div className="flex items-center gap-3">
                 <img
-                  src={getAvatarUrl(member.playerId, member.playerAvatar)}
+                  src={getAvatarUrl(member.playerId, member.playerAvatar || null)}
                   alt={member.playerUsername}
                   className="w-10 h-10 rounded-full"
                 />

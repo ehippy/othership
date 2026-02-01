@@ -110,7 +110,11 @@ export async function fetchGuildInfo(guildId: string): Promise<{
     throw new Error(`Failed to fetch guild info: ${error}`);
   }
 
-  const guild = await response.json();
+  const guild = await response.json() as {
+    id: string;
+    name: string;
+    icon: string | null;
+  };
   return {
     id: guild.id,
     name: guild.name,
@@ -140,12 +144,16 @@ export async function fetchGuildChannels(guildId: string): Promise<Array<{
     throw new Error(`Failed to fetch guild channels: ${error}`);
   }
 
-  const channels = await response.json();
+  const channels = await response.json() as Array<{
+    id: string;
+    name: string;
+    type: number;
+  }>;
   
   // Filter to text channels only (type 0)
   return channels
-    .filter((channel: any) => channel.type === 0)
-    .map((channel: any) => ({
+    .filter((channel) => channel.type === 0)
+    .map((channel) => ({
       id: channel.id,
       name: channel.name,
       type: channel.type,

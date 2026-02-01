@@ -213,7 +213,11 @@ export const playerService = {
         return null;
       }
 
-      const tokens = await tokenResponse.json();
+      const tokens = await tokenResponse.json() as {
+        access_token: string;
+        refresh_token?: string;
+        expires_in: number;
+      };
       const expiresAt = Date.now() + (tokens.expires_in * 1000);
 
       // Update stored tokens

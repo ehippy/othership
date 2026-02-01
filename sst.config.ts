@@ -82,6 +82,8 @@ export default $config({
         NEXT_PUBLIC_AUTH_LOGIN_URL: $interpolate`https://${apiDomain}/auth/login`,
         NEXT_PUBLIC_DISCORD_APP_ID: discordApplicationId.value,
       },
+      // Disable features we're not using
+      warm: 0,
     });
     
     // tRPC API routes
