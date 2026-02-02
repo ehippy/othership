@@ -82,7 +82,7 @@ export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) 
     <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-4 w-96 max-h-[32rem] flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">Your Servers</h3>
+        <h3 className="text-lg font-semibold text-white">Your Discord Servers</h3>
         <div className="flex items-center gap-2">
           <button
             onClick={handleRefresh}
