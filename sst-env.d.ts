@@ -31,7 +31,7 @@ declare module "sst" {
       "value": string
     }
     "Frontend": {
-      "type": "sst.aws.Nextjs"
+      "type": "sst.aws.StaticSite"
       "url": string
     }
     "JwtSecret": {

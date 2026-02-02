@@ -23,15 +23,27 @@
 - **Deployment:** SST Ion 3.x
 
 ### Frontend
-- **Framework:** Next.js (App Router) with TypeScript
+- **Framework:** Next.js (App Router) with TypeScript - **SPA ONLY, NO SSR**
+  - `output: 'export'` - Static site generation
+  - All pages are client components (`"use client"`)
+  - Client-side routing with pretty URLs (`/guildname-123456`)
+  - Deployed as static files to S3 + CloudFront
 - **UI Library:** React
 - **Styling:** Tailwind CSS
+- **Data Fetching:** tRPC + React Query (client-side only)
+- **Authentication:** Client-side JWT stored in localStorage
 - **Game Rendering:** Pixi.js for 2D WebGL rendering
   - @pixi/react for React integration
   - pixi-tilemap for efficient tile rendering
   - pixi-viewport for camera controls
   - pixi-filters for visual effects
-- **Real-time Updates:** WebSockets or Server-Sent Events
+
+**Important: This is a pure Single-Page Application (SPA)**
+- No server-side rendering (SSR)
+- No API routes in Next.js
+- All dynamic data fetched client-side via tRPC
+- CloudFront configured to serve index.html for all routes (404 → 200 redirect)
+- Pretty URLs work via client-side routing (e.g., `/guildname-1234567890`)
 
 ### Development Tools
 - **Package Manager:** pnpm with workspaces (monorepo)

@@ -79,8 +79,9 @@ export function useGuildSelection() {
       icon: guildIcon || null,
     });
     
-    // Push guild slug-id to URL path
-    router.push(createGuildPath(guildName, guildId));
+    // Navigate to guild page with pretty URL slug
+    const path = createGuildPath(guildName, guildId);
+    router.push(path);
   };
 
   return { selectedGuild, selectGuild, guilds };

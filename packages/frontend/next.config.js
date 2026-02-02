@@ -2,6 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@derelict/shared'],
+  ...(process.env.NEXT_OUTPUT_MODE === 'export' && { output: 'export' }),
+  trailingSlash: true,
   env: {
     NEXT_PUBLIC_DISCORD_APP_ID: process.env.DISCORD_APPLICATION_ID,
   },

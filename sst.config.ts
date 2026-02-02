@@ -67,10 +67,14 @@ export default $config({
       },
     });
 
-    // Deploy Next.js frontend (defined early so we can reference it)
-    // CloudFront distribution with SSL certificate automatically provisioned
-    const frontend = new sst.aws.Nextjs("Frontend", {
+    // Deploy Next.js frontend as static site
+    // Exported as static HTML/CSS/JS and served from S3 via CloudFront
+    const frontend = new sst.aws.StaticSite("Frontend", {
       path: "packages/frontend",
+      build: {
+        command: "NEXT_OUTPUT_MODE=export pnpm build",
+        output: "out",
+      },
       domain: {
         name: frontendDomain,
         dns: sst.aws.dns({
@@ -82,8 +86,17 @@ export default $config({
         NEXT_PUBLIC_AUTH_LOGIN_URL: $interpolate`https://${apiDomain}/auth/login`,
         NEXT_PUBLIC_DISCORD_APP_ID: discordApplicationId.value,
       },
-      // Disable features we're not using
-      warm: 0,
+      transform: {
+        cdn: {
+          customErrorResponses: [
+            {
+              errorCode: 404,
+              responseCode: 200,
+              responsePagePath: "/index.html",
+            },
+          ],
+        },
+      },
     });
     
     // tRPC API routes
