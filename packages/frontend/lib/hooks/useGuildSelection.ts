@@ -84,5 +84,5 @@ export function useGuildSelection() {
     navigate(path);
   };
 
-  return { selectedGuild, selectGuild, guilds };
+  return { selectedGuild, selectGuild, guilds, refetchGuilds };
 }

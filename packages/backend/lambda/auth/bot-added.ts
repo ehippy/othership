@@ -102,10 +102,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
               // Notify parent window that bot was added
               if (window.opener) {
                 window.opener.postMessage({ type: 'bot-added', guildId: '${guildId}' }, '*');
+                setTimeout(() => {
+                  window.close();
+                }, 2000);
+              } else {
+                // Not a popup - redirect to frontend with guild ID
+                setTimeout(() => {
+                  window.location.href = '${process.env.APP_URL}/?botAdded=${guildId}';
+                }, 2000);
               }
-              setTimeout(() => {
-                window.close();
-              }, 2000);
             </script>
           </head>
           <body>

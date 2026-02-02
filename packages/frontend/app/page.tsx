@@ -1,11 +1,26 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 
 export default function HomePage() {
   const { isLoading, user, logout } = useAuth();
-  const { selectedGuild, selectGuild } = useGuildSelection();
+  const { selectedGuild, selectGuild, refetchGuilds } = useGuildSelection();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Check if returning from bot installation
+  React.useEffect(() => {
+    const botAddedGuildId = searchParams.get('botAdded');
+    if (botAddedGuildId) {
+      console.log('[HomePage] Bot was added to guild:', botAddedGuildId);
+      // Refetch guilds to get updated botInstalled status
+      refetchGuilds();
+      // Clean up URL
+      searchParams.delete('botAdded');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, refetchGuilds]);
 
   // Don't render anything while checking authentication
   if (isLoading) {
