@@ -1,13 +1,84 @@
 import { Resource } from "sst";
+import { guildService } from "../db/services";
 
 const DISCORD_API_BASE = "https://discord.com/api/v10";
+
+/**
+ * Check if the bot is still a member of a guild
+ */
+async function checkBotInGuild(guildId: string): Promise<boolean> {
+  const response = await fetch(
+    `${DISCORD_API_BASE}/guilds/${guildId}`,
+    {
+      headers: {
+        Authorization: `Bot ${Resource.DiscordBotToken.value}`,
+      },
+    }
+  );
+  
+  // 200: Bot is in guild
+  // 403: Bot lacks permissions (but is in guild) - error code 50001 means not in guild
+  // 404: Guild doesn't exist or bot not in guild
+  if (response.ok) {
+    return true;
+  }
+  
+  if (response.status === 404) {
+    return false; // Guild doesn't exist or bot definitely not in it
+  }
+  
+  if (response.status === 403) {
+    try {
+      const error = await response.json();
+      // Error code 50001 = Missing Access (bot not in guild)
+      if (error.code === 50001) {
+        return false;
+      }
+    } catch {
+      // Couldn't parse error, assume network issue
+    }
+  }
+  
+  // For other errors (rate limits, server errors), assume bot is still in guild
+  return true;
+}
+
+/**
+ * Handle Discord API errors, including bot removal detection
+ */
+async function handleDiscordError(response: Response, guildId?: string): Promise<void> {
+  const status = response.status;
+  const errorText = await response.text();
+  
+  // If we got a guild-related error, do an authoritative check
+  if (guildId && (status === 403 || status === 404)) {
+    console.log(`[discord-client] Discord API error ${status} for guild ${guildId}, checking bot membership...`);
+    
+    const stillInGuild = await checkBotInGuild(guildId);
+    
+    if (!stillInGuild) {
+      console.log(`[discord-client] Confirmed: Bot is not in guild ${guildId}`);
+      try {
+        await guildService.markBotUninstalled(guildId);
+        console.log(`[discord-client] Marked guild ${guildId} as bot uninstalled`);
+      } catch (err) {
+        console.error(`[discord-client] Failed to mark guild ${guildId} as uninstalled:`, err);
+      }
+    } else {
+      console.log(`[discord-client] Bot is still in guild ${guildId}, error was likely a permission issue`);
+    }
+  }
+  
+  throw new Error(`Discord API error (${status}): ${errorText}`);
+}
 
 /**
  * Post a message to a Discord channel
  */
 export async function postToChannel(
   channelId: string,
-  content: string
+  content: string,
+  guildId?: string
 ): Promise<void> {
   const response = await fetch(
     `${DISCORD_API_BASE}/channels/${channelId}/messages`,
@@ -22,8 +93,7 @@ export async function postToChannel(
   );
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to post to Discord: ${error}`);
+    await handleDiscordError(response, guildId);
   }
 }
 
@@ -37,7 +107,8 @@ export async function postEmbed(
     description?: string;
     color?: number;
     fields?: Array<{ name: string; value: string; inline?: boolean }>;
-  }
+  },
+  guildId?: string
 ): Promise<void> {
   const response = await fetch(
     `${DISCORD_API_BASE}/channels/${channelId}/messages`,
@@ -52,8 +123,7 @@ export async function postEmbed(
   );
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to post embed to Discord: ${error}`);
+    await handleDiscordError(response, guildId);
   }
 }
 
@@ -104,10 +174,11 @@ export async function fetchGuildInfo(guildId: string): Promise<{
 
   if (!response.ok) {
     if (response.status === 404) {
+      // Guild doesn't exist or bot was removed
+      await handleDiscordError(response, guildId);
       return null;
     }
-    const error = await response.text();
-    throw new Error(`Failed to fetch guild info: ${error}`);
+    await handleDiscordError(response, guildId);
   }
 
   const guild = await response.json() as {
@@ -140,8 +211,7 @@ export async function fetchGuildChannels(guildId: string): Promise<Array<{
   );
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Failed to fetch guild channels: ${error}`);
+    await handleDiscordError(response, guildId);
   }
 
   const channels = await response.json() as Array<{
@@ -182,6 +252,7 @@ export async function validateChannelPermissions(
 
   if (!channelResponse.ok) {
     console.error('[validateChannelPermissions] Cannot access channel:', channelResponse.status);
+    await handleDiscordError(channelResponse, guildId);
     return { valid: false, missingPermissions: ['Channel not accessible - bot may not be in server'] };
   }
 
@@ -210,6 +281,7 @@ export async function validateChannelPermissions(
   if (!testResponse.ok) {
     const errorText = await testResponse.text();
     console.error('[validateChannelPermissions] Message send failed:', testResponse.status, errorText);
+    await handleDiscordError(testResponse, guildId);
     
     let error;
     try {

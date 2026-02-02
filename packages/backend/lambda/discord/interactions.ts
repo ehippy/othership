@@ -124,7 +124,8 @@ export async function handler(
           // Post to channel
           await postToChannel(
             channelId,
-            `🎮 **Game Started!**\n\nGame ID: ${game.id}\n\nUse \`/join\` to join the game!`
+            `🎮 **Game Started!**\n\nGame ID: ${game.id}\n\nUse \`/join\` to join the game!`,
+            interaction.guild_id
           );
 
           return {
@@ -190,7 +191,8 @@ export async function handler(
           // Post to channel
           await postToChannel(
             channelId,
-            `✅ **${username}** joined the game!`
+            `✅ **${username}** joined the game!`,
+            interaction.guild_id
           );
 
           return {

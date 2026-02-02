@@ -109,7 +109,7 @@ export const guildRouter = router({
       
       const randomMessage = messages[Math.floor(Math.random() * messages.length)];
       
-      await postToChannel(guildRecord.gameChannelId, randomMessage);
+      await postToChannel(guildRecord.gameChannelId, randomMessage, input.discordGuildId);
       
       return { success: true };
     }),
@@ -165,7 +165,7 @@ export const guildRouter = router({
           const message = input.optedIn
             ? `👁️ <@${input.playerId}> steps into the shadows. (opted in to play)`
             : `💀 <@${input.playerId}> retreats into the void. We'll meet again soon. (opted out)`;
-          postToChannel(guildRecord.gameChannelId, message).catch(err => 
+          postToChannel(guildRecord.gameChannelId, message, input.discordGuildId).catch(err => 
             console.error("[guild.setOptIn] Failed to post notification:", err)
           );
         }
