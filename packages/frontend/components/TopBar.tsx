@@ -35,36 +35,50 @@ export function TopBar({ avatar, discordUserId, username, onLogout, onSelectGuil
     <>
       {/* Server selector popup */}
       {showServers && (
-        <div className="fixed top-20 left-4 z-50">
-          <ServerSelector 
-            onClose={() => setShowServers(false)}
-            onSelectGuild={onSelectGuild}
+        <>
+          {/* Backdrop to close on click outside */}
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowServers(false)}
           />
-        </div>
+          <div className="fixed top-20 left-4 z-50">
+            <ServerSelector 
+              onClose={() => setShowServers(false)}
+              onSelectGuild={onSelectGuild}
+            />
+          </div>
+        </>
       )}
 
       {/* User menu popup */}
       {showUserMenu && (
-        <div className="fixed top-20 right-4 z-50">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-2 w-48">
-            <Link
-              to="/faq"
-              className="block w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 rounded transition-colors text-sm"
-              onClick={() => setShowUserMenu(false)}
-            >
-              FAQ
-            </Link>
-            <button
-              onClick={() => {
-                onLogout();
-                setShowUserMenu(false);
-              }}
-              className="w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 rounded transition-colors text-sm"
-            >
-              Logout
-            </button>
+        <>
+          {/* Backdrop to close on click outside */}
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setShowUserMenu(false)}
+          />
+          <div className="fixed top-20 right-4 z-50">
+            <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-2 w-48">
+              <Link
+                to="/faq"
+                className="block w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 rounded transition-colors text-sm"
+                onClick={() => setShowUserMenu(false)}
+              >
+                FAQ
+              </Link>
+              <button
+                onClick={() => {
+                  onLogout();
+                  setShowUserMenu(false);
+                }}
+                className="w-full px-3 py-2 text-left text-gray-300 hover:bg-gray-700 rounded transition-colors text-sm"
+              >
+                Logout
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Top bar */}
