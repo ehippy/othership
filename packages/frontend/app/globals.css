@@ -5,6 +5,10 @@
   --background-start-rgb: 17, 24, 39;
   --background-end-rgb: 0, 0, 0;
   
+  /* Discord brand colors */
+  --color-discord: #5865F2;
+  --color-discord-hover: #4752C4;
+  
   /* Semantic colors */
   --color-admin: rgb(234, 179, 8); /* yellow-500 */
   --color-admin-dark: rgb(202, 138, 4); /* yellow-600 */

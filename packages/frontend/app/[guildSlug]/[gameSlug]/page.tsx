@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useOptionalAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
 import { formatGameName, getAvatarUrl } from "@/lib/utils";
 
 export default function GamePage() {
   const params = useParams<{ guildSlug: string; gameSlug: string }>();
-  const { isLoading: authLoading, user, logout } = useAuth();
+  const { isLoading: authLoading, user, logout } = useOptionalAuth();
   const { selectedGuild, selectGuild, guilds } = useGuildSelection();
 
   // Fetch game data using slug-based lookup
@@ -55,13 +55,36 @@ export default function GamePage() {
     }
   }, [game?.status, game?.gameStartTime]);
 
+  // Check if user has management permissions
+  const canManage = !!user && userGuild?.canManage === true;
+
   // Show loading
-  if (authLoading || gameLoading) {
+  if (authLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
         <div className="text-center">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </main>
+    );
+  }
+  
+  if (gameLoading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white pt-16">
+        <div className="text-center">
           <p className="text-gray-400">Loading game...</p>
         </div>
+        <TopBar
+          avatar={user?.avatar || null}
+          discordUserId={user?.discordUserId || null}
+          username={user?.username || null}
+          onLogout={logout}
+          onSelectGuild={selectGuild}
+          selectedGuildName={selectedGuild?.name}
+          selectedGuildId={selectedGuild?.id || null}
+          selectedGuildIcon={selectedGuild?.icon || null}
+        />
       </main>
     );
   }
@@ -69,13 +92,23 @@ export default function GamePage() {
   // Show not found
   if (!game) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white pt-16">
         <div className="text-center">
           <p className="text-gray-400">Game not found</p>
           <a href={`/${params.guildSlug}`} className="text-indigo-400 hover:text-indigo-300 mt-4 inline-block">
             ← Back to guild
           </a>
         </div>
+        <TopBar
+          avatar={user?.avatar || null}
+          discordUserId={user?.discordUserId || null}
+          username={user?.username || null}
+          onLogout={logout}
+          onSelectGuild={selectGuild}
+          selectedGuildName={selectedGuild?.name}
+          selectedGuildId={selectedGuild?.id || null}
+          selectedGuildIcon={selectedGuild?.icon || null}
+        />
       </main>
     );
   }
@@ -207,9 +240,9 @@ export default function GamePage() {
 
       {/* Top bar */}
       <TopBar
-        avatar={user.avatar}
-        discordUserId={user.discordUserId}
-        username={user.username}
+        avatar={user?.avatar || null}
+        discordUserId={user?.discordUserId || null}
+        username={user?.username || null}
         onLogout={logout}
         onSelectGuild={selectGuild}
         selectedGuildName={selectedGuild?.name}

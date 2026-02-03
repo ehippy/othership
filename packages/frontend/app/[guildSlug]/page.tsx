@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useOptionalAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
 import { createGamePath, formatGameName, getGuildIconUrl } from "@/lib/utils";
@@ -11,7 +11,7 @@ import type { Scenario } from "@derelict/shared";
 export default function GuildPage() {
   const params = useParams<{ guildSlug: string }>();
   const navigate = useNavigate();
-  const { isLoading: authLoading, user, logout } = useAuth();
+  const { isLoading: authLoading, user, logout } = useOptionalAuth();
   const { selectedGuild, selectGuild, guilds } = useGuildSelection();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [isEditingChannel, setIsEditingChannel] = useState(false);
@@ -155,7 +155,7 @@ export default function GuildPage() {
   };
 
   // Show loading while auth or guilds are loading
-  if (authLoading || (guildsLoading && !guilds)) {
+  if (authLoading) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
         <div className="text-center">
@@ -167,6 +167,9 @@ export default function GuildPage() {
 
   // Use cached guild data for immediate render, guild.get data for gameChannelId
   const displayGuild = userGuild || guild;
+  
+  // Check if user has management permissions
+  const canManage = !!user && userGuild?.canManage === true;
   
   // Show error if guild query failed
   if (guildError) {
@@ -622,9 +625,9 @@ export default function GuildPage() {
 
       {/* Top bar */}
       <TopBar
-        avatar={user.avatar}
-        discordUserId={user.discordUserId}
-        username={user.username}
+        avatar={user?.avatar || null}
+        discordUserId={user?.discordUserId || null}
+        username={user?.username || null}
         onLogout={logout}
         onSelectGuild={selectGuild}
         selectedGuildName={selectedGuild?.name}

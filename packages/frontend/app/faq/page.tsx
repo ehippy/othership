@@ -2,11 +2,11 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
 import { FAQSection } from "@/components/FAQSection";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useOptionalAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 
 export default function FAQPage() {
-  const { isLoading, user, logout } = useAuth();
+  const { isLoading, user, logout } = useOptionalAuth();
   const { selectedGuild, selectGuild } = useGuildSelection();
 
   if (isLoading) {
@@ -101,9 +101,9 @@ export default function FAQPage() {
 
       {/* Top bar */}
       <TopBar
-        avatar={user.avatar}
-        discordUserId={user.discordUserId}
-        username={user.username}
+        avatar={user?.avatar || null}
+        discordUserId={user?.discordUserId || null}
+        username={user?.username || null}
         onLogout={logout}
         onSelectGuild={selectGuild}
         selectedGuildName={selectedGuild?.name}

@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { TopBar } from "@/components/TopBar";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useOptionalAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
 import type { Scenario } from "@derelict/shared";
 
 export default function ScenariosPage() {
-  const { isLoading: authLoading, user, logout } = useAuth();
+  const { isLoading: authLoading, user, logout } = useOptionalAuth();
   const { selectedGuild, selectGuild } = useGuildSelection();
   const [showForm, setShowForm] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
@@ -139,36 +139,36 @@ export default function ScenariosPage() {
               <p className="text-gray-400">Manage game scenarios and missions</p>
             </div>
             {/* Conditional buttons based on creator status */}
-            {user.creatorApplicationStatus === "approved" || user.isAdmin ? (
+            {user?.creatorApplicationStatus === "approved" || user?.isAdmin ? (
               <button
                 onClick={() => setShowForm(!showForm)}
                 className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors font-semibold"
               >
                 {showForm ? "Cancel" : "➕ New Scenario"}
               </button>
-            ) : user.creatorApplicationStatus === "pending" ? (
+            ) : user?.creatorApplicationStatus === "pending" ? (
               <div className="px-6 py-3 bg-yellow-900/50 border border-yellow-700 text-yellow-200 rounded font-semibold">
                 ⏳ Application Pending
               </div>
-            ) : user.creatorApplicationStatus === "rejected" ? (
+            ) : user?.creatorApplicationStatus === "rejected" ? (
               <button
                 onClick={() => setShowApplicationForm(true)}
                 className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors font-semibold"
               >
                 ✨ Re-apply to Create Scenarios
               </button>
-            ) : (
+            ) : user ? (
               <button
                 onClick={() => setShowApplicationForm(true)}
                 className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors font-semibold"
               >
                 ✨ Apply to Create Scenarios
               </button>
-            )}
+            ) : null}
           </div>
 
           {/* Admin Panel for Pending Applications */}
-          {user.isAdmin && pendingApplications && pendingApplications.length > 0 && (
+          {user?.isAdmin && pendingApplications && pendingApplications.length > 0 && (
             <div className="bg-gray-800 border-2 border-yellow-600 rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold mb-6 text-yellow-400">⚡ Pending Creator Applications</h2>
               <div className="space-y-4">
@@ -216,7 +216,7 @@ export default function ScenariosPage() {
           )}
 
           {/* Admin Utilities */}
-          {user.isAdmin && (
+          {user?.isAdmin && (
             <div className="bg-gray-800 border-2 border-purple-600 rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold mb-4 text-purple-400">🔧 Admin Utilities</h2>
               <button
@@ -407,7 +407,7 @@ export default function ScenariosPage() {
                     <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                       <span>👥 {scenario.minPlayers}-{scenario.maxPlayers} players</span>
                     </div>
-                    {(scenario.creatorId === user.discordUserId || user.isAdmin) && (
+                    {user && (scenario.creatorId === user.discordUserId || user.isAdmin) && (
                       <div className="flex items-center gap-2 mb-4">
                         <button
                           onClick={() => {
@@ -446,9 +446,9 @@ export default function ScenariosPage() {
 
       {/* Top bar */}
       <TopBar
-        avatar={user.avatar}
-        discordUserId={user.discordUserId}
-        username={user.username}
+        avatar={user?.avatar || null}
+        discordUserId={user?.discordUserId || null}
+        username={user?.username || null}
         onLogout={logout}
         onSelectGuild={selectGuild}
         selectedGuildName={selectedGuild?.name}

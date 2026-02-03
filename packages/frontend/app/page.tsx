@@ -1,11 +1,11 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
-import { useAuth } from "@/lib/hooks/useAuth";
+import { useOptionalAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 
 export default function HomePage() {
-  const { isLoading, user, logout } = useAuth();
+  const { isLoading, user, logout } = useOptionalAuth();
   const { selectedGuild, selectGuild, refetchGuilds } = useGuildSelection();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -63,9 +63,9 @@ export default function HomePage() {
 
       {/* Top bar */}
       <TopBar
-        avatar={user.avatar}
-        discordUserId={user.discordUserId}
-        username={user.username}
+        avatar={user?.avatar || null}
+        discordUserId={user?.discordUserId || null}
+        username={user?.username || null}
         onLogout={logout}
         onSelectGuild={selectGuild}
         selectedGuildName={selectedGuild?.name}

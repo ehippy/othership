@@ -1,14 +1,14 @@
 import { z } from "zod";
-import { router, protectedProcedure } from "./trpc";
+import { router, protectedProcedure, publicProcedure } from "./trpc";
 import { guildService, playerService } from "../../db/services";
 import { guildMembershipService } from "../../db/services/guild-membership.service";
 import { fetchGuildChannels, validateChannelPermissions, postToChannel } from "../../lib/discord-client";
 
 export const guildRouter = router({
   /**
-   * Get guild info by slug
+   * Get guild info by slug (public - for shareable URLs)
    */
-  getBySlug: protectedProcedure
+  getBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async ({ input }) => {
       const guild = await guildService.getGuildBySlug(input.slug);
@@ -131,9 +131,8 @@ export const guildRouter = router({
    * Get guild roster (all members with opt-in status)
    * Public - anyone can view the roster
    */
-  getRoster: protectedProcedure
-    .input(z.object({ discordGuildId: z.string() }))
-    .query(async ({ input }) => {
+  getRoster: publicProcedure
+    .input(z.object({ discordGuildId: z.string() })).query(async ({ input }) => {
       console.log("[guild.getRoster] Fetching roster for guild:", input.discordGuildId);
       
       const roster = await guildMembershipService.getRoster(input.discordGuildId);

@@ -12,6 +12,10 @@ const config: Config = {
       colors: {
         background: 'var(--background)',
         foreground: 'var(--foreground)',
+        discord: {
+          DEFAULT: '#5865F2',
+          hover: '#4752C4',
+        },
       },
     },
   },
