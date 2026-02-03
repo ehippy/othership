@@ -12,7 +12,7 @@ export default function GamePage() {
   const { guilds } = useGuildSelection();
 
   // Fetch game data using slug-based lookup
-  const { data: game, isLoading: gameLoading } = trpc.game.getByGuildSlugAndGameSlug.useQuery(
+  const { data: game, isLoading: gameLoading, refetch: refetchGame } = trpc.game.getByGuildSlugAndGameSlug.useQuery(
     { guildSlug: params.guildSlug || "", gameSlug: params.gameSlug || "" },
     { enabled: !!params.guildSlug && !!params.gameSlug }
   );
@@ -28,6 +28,20 @@ export default function GamePage() {
 
   // Fetch guild info for display
   const userGuild = guilds?.find((g) => g.id === game?.discordGuildId);
+
+  // Check if user is opted in by checking if they're in the roster
+  const isOptedIn = roster?.some((member: any) => member.playerId === user?.discordUserId);
+
+  // Begin character creation mutation
+  const beginCharacterCreationMutation = trpc.game.beginCharacterCreation.useMutation({
+    onSuccess: () => {
+      // Refetch game to update status
+      refetchGame();
+    },
+    onError: (error) => {
+      alert(`Failed to start game: ${error.message}`);
+    },
+  });
 
   // Calculate countdown for staging games
   const [timeRemaining, setTimeRemaining] = useState<string>("");
@@ -57,6 +71,9 @@ export default function GamePage() {
 
   // Check if user has management permissions
   const canManage = !!user && userGuild?.canManage === true;
+  
+  // Check if user can start the game (opted in OR admin/manager)
+  const canStartGame = !!user && (isOptedIn || canManage);
 
   // Show loading
   if (authLoading) {
@@ -153,79 +170,76 @@ export default function GamePage() {
   };
 
   return (
-    <Layout topBarMode="hamburger">
-      {/* Content area */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-
-          {/* Game header */}
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-              <div>
-                <h1 className="text-3xl font-bold text-indigo-400 mb-2">{formatGameName(game.slug)}</h1>
-                <p className="text-xl text-gray-300">{game.scenarioName}</p>
-              </div>
-              {getStatusBadge(game.status)}
-            </div>
-
+    <Layout topBarMode="hamburger" className="!p-0">
+      {/* Full-screen game HUD */}
+      <div className="relative w-full h-screen overflow-hidden">
+        
+        {/* Game title overlay - top right */}
+        <div className="absolute top-4 right-4 z-10 bg-black/70 backdrop-blur-sm border border-gray-700 rounded-lg px-4 py-2">
+          <h1 className="text-lg font-bold text-indigo-400">{game.scenarioName}</h1>
+          <div className="flex items-center gap-3 mt-1">
+            {getStatusBadge(game.status)}
             {/* Countdown timer for staging */}
             {game.status === "staging" && timeRemaining && (
-              <div className="bg-yellow-900/20 border border-yellow-700/50 rounded p-4 mt-4">
-                <p className="text-yellow-200 font-semibold">
-                  ⏱️ Game starts in: {timeRemaining}
-                </p>
-              </div>
+              <span className="text-xs text-yellow-300">
+                ⏱️ Starts in: {timeRemaining}
+              </span>
             )}
-
-            {/* Phase message */}
-            <p className="text-gray-400 mt-4">{getPhaseMessage(game.status)}</p>
           </div>
-
-          {/* Player roster */}
-          {(game.status === "staging" || game.status === "character_creation") && roster && (
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-bold mb-4">
-                {game.status === "staging" ? "Current Roster" : "Players"}
-              </h2>
-              {roster.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {roster.map((member: any) => (
-                      <div
-                        key={member.playerId}
-                        className="flex items-center gap-3 bg-gray-900 rounded p-3"
-                      >
-                        <img
-                          src={getAvatarUrl(member.playerId, member.playerAvatar)}
-                          alt={member.playerUsername}
-                          className="w-10 h-10 rounded-full"
-                        />
-                        <span className="text-gray-300">{member.playerUsername}</span>
-                      </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400">No players in roster yet</p>
+          {/* Player count and start button for staging */}
+          {game.status === "staging" && (
+            <div className="flex items-center gap-3 mt-2 pt-2 border-t border-gray-600">
+              <span className="text-sm text-yellow-200">
+                {roster?.length || 0}/{game.minPlayers}-{game.maxPlayers} players
+              </span>
+              {canStartGame && (
+                <button
+                  onClick={() => beginCharacterCreationMutation.mutate({ gameId: game.id })}
+                  disabled={beginCharacterCreationMutation.isPending || (roster?.length || 0) < game.minPlayers}
+                  className="px-3 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs font-semibold rounded transition-colors"
+                  title={(roster?.length || 0) < game.minPlayers ? `Need at least ${game.minPlayers} players` : "Start character creation"}
+                >
+                  {beginCharacterCreationMutation.isPending ? "Starting..." : "Start"}
+                </button>
               )}
             </div>
           )}
+        </div>
 
+        {/* Full-bleed PixiJS map container */}
+        <div className="absolute inset-0 w-full h-full bg-gray-900">
           {/* Map placeholder */}
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-            <h2 className="text-xl font-bold mb-4">Map</h2>
-            <div className="aspect-video bg-gray-900 rounded flex items-center justify-center">
-              <p className="text-gray-500">Map rendering with Pixi.js coming soon...</p>
-            </div>
+          <div className="w-full h-full flex items-center justify-center">
+            <p className="text-gray-500">Map rendering with Pixi.js coming soon...</p>
           </div>
+        </div>
 
-          {/* Character sheets placeholder */}
-          {(game.status === "character_creation" || game.status === "active") && (
-            <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
-              <h2 className="text-xl font-bold mb-4">Character Sheets</h2>
-              <div className="bg-gray-900 rounded p-8 text-center">
-                <p className="text-gray-500">Character creation interface coming soon...</p>
+        {/* Bottom character bar */}
+        <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/80 backdrop-blur-md border-t border-gray-700">
+          <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
+            {roster && roster.length > 0 ? (
+              roster.map((member: any) => (
+                <div
+                  key={member.playerId}
+                  className="flex-shrink-0 flex items-center gap-2 bg-gray-800 hover:bg-gray-700 transition-colors border border-gray-600 rounded-lg px-3 py-2 min-w-[140px]"
+                >
+                  <img
+                    src={getAvatarUrl(member.playerId, member.playerAvatar)}
+                    alt={member.playerUsername}
+                    className="w-8 h-8 rounded-full"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{member.playerUsername}</p>
+                    <p className="text-xs text-gray-400">Ready</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="w-full text-center py-2">
+                <p className="text-sm text-gray-400">No players in roster yet</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </Layout>

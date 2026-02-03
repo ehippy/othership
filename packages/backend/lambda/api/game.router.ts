@@ -195,7 +195,41 @@ export const gameRouter = router({
       return { game, players };
     }),
 
-  // Start game
+  // Begin character creation (staging → character_creation)
+  beginCharacterCreation: protectedProcedure
+    .input(z.object({ gameId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const game = await gameService.getGame(input.gameId);
+      if (!game) {
+        throw new Error("Game not found");
+      }
+
+      // Check if user is opted in or has guild management permissions
+      const player = await playerService.getPlayer(ctx.playerId);
+      const membership = await guildMembershipService.getMembership(ctx.user.discordUserId, game.guildId);
+      const userGuild = player?.guilds?.find(g => g.id === game.guildId);
+      const canManage = userGuild?.permissions
+        ? (BigInt(userGuild.permissions) & BigInt(DISCORD_PERMISSIONS.ADMINISTRATOR | DISCORD_PERMISSIONS.MANAGE_GUILD)) !== BigInt(0)
+        : false;
+      
+      if (!membership?.optedIn && !canManage && !ctx.user.isAdmin) {
+        throw new Error("Unauthorized: Only opted-in players or guild admins can start the game");
+      }
+
+      // Post character creation announcement to Discord
+      const formattedName = formatGameName(game.slug);
+      const message = `📝 **Character Creation**\n\n**${formattedName}** is now in character creation phase!\n\nPlayers: Name your character and finalize your builds.`;
+      
+      try {
+        await postToChannel(game.channelId, message, game.guildId);
+      } catch (error) {
+        console.error('Failed to post character creation announcement:', error);
+      }
+
+      return await gameService.updateGameStatus(input.gameId, "character_creation");
+    }),
+
+  // Start game (character_creation → active)
   start: publicProcedure
     .input(z.object({ gameId: z.string() }))
     .mutation(async ({ input }) => {
