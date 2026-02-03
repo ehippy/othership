@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { trpc, trpcClient } from '@/lib/api/trpc';
 import '@/app/globals.css';
 
@@ -18,18 +18,21 @@ function App() {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes
-            gcTime: 10 * 60 * 1000, // 10 minutes (same as cache time for persistence)
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: true,
-            refetchOnMount: false, // Don't refetch when component remounts
+            // Different settings for different data types:
+            // - User guilds: stable, good for caching
+            // - Game state: dynamic, needs fresh data
+            staleTime: 0, // Always consider data stale by default (multiplayer game)
+            gcTime: 10 * 60 * 1000, // 10 minutes - keep unmounted data around briefly
+            refetchOnWindowFocus: true, // Refetch when user tabs back (see other players' moves)
+            refetchOnReconnect: true, // Refetch on network reconnect
+            refetchOnMount: true, // Refetch when component mounts (see latest game state)
           },
         },
       })
   );
 
   const [persister] = useState(() =>
-    createSyncStoragePersister({
+    createAsyncStoragePersister({
       storage: window.localStorage,
       key: 'othership_query_cache',
     })
@@ -39,7 +42,10 @@ function App() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <PersistQueryClientProvider
         client={queryClient}
-        persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }} // 24 hour cache
+        persistOptions={{ 
+          persister, 
+          maxAge: 1000 * 60 * 60, // 1 hour - shorter for multiplayer game freshness
+        }}
       >
         <BrowserRouter>
           <Routes>

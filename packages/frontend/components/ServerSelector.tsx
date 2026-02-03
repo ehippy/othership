@@ -17,7 +17,12 @@ interface Guild {
 
 export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: guilds, isLoading, refetch } = trpc.player.getGuilds.useQuery();
+  const { data: guilds, isLoading, refetch } = trpc.player.getGuilds.useQuery(undefined, {
+    // Override defaults: guilds list is stable, good for caching
+    staleTime: 5 * 60 * 1000, // 5 minutes - guilds don't change often
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
   const refreshMutation = trpc.player.refreshGuilds.useMutation({
     onSuccess: () => {
       refetch();
