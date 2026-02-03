@@ -43,7 +43,7 @@
 **Goal**: Load a scenario template and initialize game state
 
 **Backend Tasks**:
-- [ ] Create Scenario entity
+- [x] Create Scenario entity
   - Name, description, difficulty
   - Map/room layout (JSON)
   - Starting entities (NPCs, items, hazards)
