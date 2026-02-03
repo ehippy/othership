@@ -46,10 +46,18 @@ export const gameRouter = router({
       // Get current roster for announcement
       const roster = await gameService.getCurrentRoster(input.guildId);
       
+      // Get guild for URL generation
+      const guild = await guildService.getGuildByDiscordId(input.guildId);
+      const gameUrl = guild?.slug 
+        ? `https://derelict.world/${guild.slug}/${game.slug}`
+        : null;
+      
       // Post staging announcement to Discord
       const gameStartTimestamp = Math.floor(new Date(game.gameStartTime).getTime() / 1000);
-      const formattedName = formatGameName(game.slug);
-      const message = `🎮 **New game staging!**\n\n**${formattedName}** - ${game.scenarioName}\nGame starts in 1 hour at <t:${gameStartTimestamp}:t>\n\nOpt in/out now - roster finalizes at game start! (Min: ${game.minPlayers}, Max: ${game.maxPlayers})`;
+      const titleLine = gameUrl 
+        ? `**[${game.scenarioName}](${gameUrl})**`
+        : `**${game.scenarioName}**`;
+      const message = `🎮 **New game staging!**\n\n${titleLine}\nGame starts in 1 hour at <t:${gameStartTimestamp}:t>\n\nOpt in/out now - roster finalizes at game start! (Min: ${game.minPlayers}, Max: ${game.maxPlayers})`;
       
       try {
         await postToChannel(input.channelId, message, input.guildId);
