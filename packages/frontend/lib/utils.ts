@@ -1,3 +1,7 @@
+import { formatGameName } from '@derelict/shared';
+
+export { formatGameName };
+
 /**
  * Generate a URL-safe slug from a guild name (preserves capitalization)
  * Removes special characters and replaces spaces with hyphens
@@ -36,4 +40,23 @@ export function parseGuildPath(pathname: string): string | null {
   if (!/^\d+$/.test(guildId)) return null;
   
   return guildId;
+}
+
+/**
+ * Parse a game slug to extract the game ID
+ * Game slugs are in format: adjective-noun-gID
+ * Returns null if slug is invalid
+ */
+export function parseGameSlug(slug: string): string | null {
+  // Extract everything after "g" prefix at the end
+  const match = slug.match(/-g([a-zA-Z0-9-]+)$/);
+  if (!match) return null;
+  return match[1];
+}
+
+/**
+ * Create a game URL path: /guild-slug/game-slug
+ */
+export function createGamePath(guildSlug: string, gameSlug: string): string {
+  return `/${guildSlug}/${gameSlug}`;
 }

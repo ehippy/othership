@@ -22,10 +22,34 @@ export const GameEntity = new Entity(
         type: "string",
         required: true,
       },
-      status: {
-        type: ["setup", "active", "paused", "completed"] as const,
+      slug: {
+        type: "string",
         required: true,
-        default: "setup",
+      },
+      scenarioId: {
+        type: "string",
+        required: true,
+      },
+      scenarioName: {
+        type: "string",
+        required: true,
+      },
+      status: {
+        type: ["staging", "character_creation", "active", "tpk", "won", "abandoned"] as const,
+        required: true,
+        default: "staging",
+      },
+      gameStartTime: {
+        type: "string",
+        required: true,
+      },
+      minPlayers: {
+        type: "number",
+        required: true,
+      },
+      maxPlayers: {
+        type: "number",
+        required: true,
       },
       turnNumber: {
         type: "number",
@@ -89,6 +113,17 @@ export const GameEntity = new Entity(
         sk: {
           field: "gsi2sk",
           composite: ["status"],
+        },
+      },
+      byGuildSlug: {
+        index: "gsi3",
+        pk: {
+          field: "gsi3pk",
+          composite: ["guildId"],
+        },
+        sk: {
+          field: "gsi3sk",
+          composite: ["slug"],
         },
       },
     },

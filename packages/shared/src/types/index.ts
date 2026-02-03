@@ -75,10 +75,30 @@ export interface Game {
   id: string;
   guildId: string;
   channelId: string;
-  status: 'setup' | 'active' | 'paused' | 'completed';
+  slug: string;
+  scenarioId: string;
+  scenarioName: string;
+  status: 'staging' | 'character_creation' | 'active' | 'tpk' | 'won' | 'abandoned';
+  gameStartTime: string; // ISO timestamp when staging ends
+  minPlayers: number;
+  maxPlayers: number;
   turnNumber: number;
   playerIds: string[];
   createdAt?: string;
   updatedAt?: string;
   ttl?: number;
+}
+
+export interface Scenario {
+  id: string;
+  name: string;
+  description: string;
+  difficulty: 'tutorial' | 'easy' | 'medium' | 'hard' | 'deadly';
+  minPlayers: number;
+  maxPlayers: number;
+  mapData?: any; // JSON structure for map/room layout
+  initialState?: any; // JSON structure for starting entities
+  objectives?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }

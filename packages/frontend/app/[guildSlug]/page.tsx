@@ -1,18 +1,22 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
-import { parseGuildPath } from "@/lib/utils";
+import { parseGuildPath, createGamePath, formatGameName } from "@/lib/utils";
 import { PlayerRoster } from "@/components/game/PlayerRoster";
+import type { Scenario } from "@derelict/shared";
 
 export default function GuildPage() {
   const params = useParams<{ guildSlug: string }>();
+  const navigate = useNavigate();
   const { isLoading: authLoading, user, logout } = useAuth();
   const { selectedGuild, selectGuild, guilds } = useGuildSelection();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [isEditingChannel, setIsEditingChannel] = useState(false);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>("");
+  const [confirmingAction, setConfirmingAction] = useState<{ gameId: string; action: 'cancel' | 'delete' } | null>(null);
   
   // Check if guilds are still loading
   const { isLoading: guildsLoading } = trpc.player.getGuilds.useQuery(undefined, {
@@ -27,6 +31,63 @@ export default function GuildPage() {
     { discordGuildId: guildId || "" },
     { enabled: !!guildId }
   );
+
+  // Fetch roster for game creation validation
+  const { data: roster } = trpc.guild.getRoster.useQuery(
+    { discordGuildId: guildId || "" },
+    { enabled: !!guildId && !!guild?.gameChannelId }
+  );
+
+  // Fetch active game
+  const { data: activeGame, refetch: refetchActiveGame } = trpc.game.getActiveByGuild.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId && !!guild?.gameChannelId }
+  );
+
+  // Fetch scenarios
+  const { data: scenarios } = trpc.scenario.listScenarios.useQuery(undefined, {
+    enabled: !!guildId && !!guild?.gameChannelId && !activeGame,
+  });
+
+  // Fetch all games for the guild
+  const { data: allGames, refetch: refetchAllGames } = trpc.game.listByGuild.useQuery(
+    { guildId: guildId || "" },
+    { enabled: !!guildId && !!guild?.gameChannelId }
+  );
+
+  // Create game mutation
+  const createGameMutation = trpc.game.create.useMutation({
+    onSuccess: (game) => {
+      refetchActiveGame();
+      // Navigate to game page
+      navigate(createGamePath(params.guildSlug || "", game.slug));
+    },
+    onError: (error) => {
+      alert(`Failed to create game: ${error.message}`);
+    },
+  });
+
+  // Abandon game mutation
+  const abandonGameMutation = trpc.game.abandon.useMutation({
+    onSuccess: () => {
+      refetchActiveGame();
+      refetchAllGames();
+    },
+    onError: (error) => {
+      alert(`Failed to abandon game: ${error.message}`);
+    },
+  });
+
+  // Delete game mutation
+  const deleteGameMutation = trpc.game.delete.useMutation({
+    onSuccess: () => {
+      refetchActiveGame();
+      refetchAllGames();
+    },
+    onError: (error) => {
+      alert(`Failed to delete game: ${error.message}`);
+    },
+  });
 
   // Fetch channels only when editing or no channel configured (admin only)
   const userGuild = guilds?.find((g) => g.id === guildId);
@@ -156,23 +217,255 @@ export default function GuildPage() {
             )}
           </div>
 
-          {/* Player Roster - only show when channel is configured */}
+          {/* Player Roster and Game Section - side by side on desktop */}
           {guild?.gameChannelId && (
-            <div className="mb-8">
-              <PlayerRoster
-                guildId={guildId || ""}
-                currentUserId={user?.discordUserId || null}
-                canManage={userGuild?.canManage || false}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Player Roster - Left */}
+              <div>
+                <PlayerRoster
+                  guildId={guildId || ""}
+                  currentUserId={user?.discordUserId || null}
+                  canManage={userGuild?.canManage || false}
+                />
+              </div>
+
+              {/* Active Game or Game Creation - Right */}
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
+              {activeGame ? (
+                // Show active game
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Current Game</h2>
+                  <div className="bg-gray-900 rounded p-4 mb-4">
+                    <h3 className="text-xl font-bold text-indigo-400 mb-2">{formatGameName(activeGame.slug)}</h3>
+                    <p className="text-gray-300 mb-2">{activeGame.scenarioName}</p>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className={`px-2 py-1 rounded ${
+                        activeGame.status === 'staging' ? 'bg-yellow-900 text-yellow-200' :
+                        activeGame.status === 'character_creation' ? 'bg-blue-900 text-blue-200' :
+                        activeGame.status === 'active' ? 'bg-green-900 text-green-200' :
+                        'bg-gray-700 text-gray-300'
+                      }`}>
+                        {activeGame.status === 'staging' ? '⏳ Staging' :
+                         activeGame.status === 'character_creation' ? '📝 Character Creation' :
+                         activeGame.status === 'active' ? '🎮 Active' :
+                         activeGame.status}
+                      </span>
+                      {activeGame.status === 'staging' && (
+                        <span className="text-gray-400">
+                          Starts {new Date(activeGame.gameStartTime).toLocaleTimeString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <a
+                    href={createGamePath(params.guildSlug || "", activeGame.slug)}
+                    className="inline-block px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors"
+                  >
+                    View Game →
+                  </a>
+                </div>
+              ) : (
+                // Game creation form
+                <div>
+                  <h2 className="text-2xl font-bold mb-4">Start a New Game</h2>
+                  {roster && roster.filter(m => m.optedIn).length === 0 ? (
+                    <p className="text-gray-400">No players have opted in yet. Opt in to start a game!</p>
+                  ) : (
+                    <>
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Select Scenario
+                        </label>
+                        {scenarios && scenarios.length > 0 ? (
+                          <select
+                            value={selectedScenarioId}
+                            onChange={(e) => setSelectedScenarioId(e.target.value)}
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          >
+                            <option value="">Choose a scenario...</option>
+                            {scenarios.map((scenario: Scenario) => (
+                              <option key={scenario.id} value={scenario.id}>
+                                {scenario.name} ({scenario.minPlayers}-{scenario.maxPlayers} players) - {scenario.difficulty}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-gray-400 text-sm">No scenarios available yet. Check back soon!</p>
+                        )}
+                        {selectedScenarioId && scenarios && (
+                          <p className="mt-2 text-sm text-gray-400">
+                            {scenarios.find((s: Scenario) => s.id === selectedScenarioId)?.description}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (!guildId || !guild?.gameChannelId || !selectedScenarioId) return;
+                          
+                          const selectedScenario = scenarios?.find((s: Scenario) => s.id === selectedScenarioId);
+                          if (!selectedScenario) return;
+                          
+                          const optedInCount = roster?.filter(m => m.optedIn).length || 0;
+                          if (optedInCount < selectedScenario.minPlayers) {
+                            alert(`Need at least ${selectedScenario.minPlayers} players. Currently ${optedInCount} opted in.`);
+                            return;
+                          }
+                          
+                          createGameMutation.mutate({
+                            guildId,
+                            channelId: guild.gameChannelId,
+                            scenarioId: selectedScenarioId,
+                          });
+                        }}
+                        disabled={!selectedScenarioId || createGameMutation.isPending || !roster?.some(m => m.optedIn)}
+                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors font-semibold"
+                      >
+                        {createGameMutation.isPending ? "Creating Game..." : "🎮 Start Game"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
+          </div>
           )}
 
-          {/* Game content area - only show when channel is configured */}
-          {guild?.gameChannelId && (
+          {/* Games List */}
+          {guild?.gameChannelId && allGames && allGames.length > 0 && (
             <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
-              <p className="text-gray-400">
-                Ready to play! Game content coming soon...
-              </p>
+              <h2 className="text-2xl font-bold mb-4">Game History</h2>
+              <div className="space-y-3">
+                {allGames.map((game: any) => (
+                  <div
+                    key={game.id}
+                    className="block bg-gray-900 border border-gray-700 hover:border-indigo-600 rounded-lg p-4 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <a
+                        href={createGamePath(params.guildSlug || "", game.slug)}
+                        className="flex-1"
+                      >
+                        <h3 className="text-lg font-bold text-indigo-400 mb-1">{formatGameName(game.slug)}</h3>
+                        <p className="text-gray-400 text-sm mb-2">{game.scenarioName}</p>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className={`px-2 py-1 rounded font-semibold ${
+                            game.status === 'staging' ? 'bg-yellow-900 text-yellow-200' :
+                            game.status === 'character_creation' ? 'bg-blue-900 text-blue-200' :
+                            game.status === 'active' ? 'bg-green-900 text-green-200' :
+                            game.status === 'tpk' ? 'bg-red-900 text-red-200' :
+                            game.status === 'won' ? 'bg-purple-900 text-purple-200' :
+                            'bg-gray-700 text-gray-300'
+                          }`}>
+                            {game.status === 'staging' ? '⏳ Staging' :
+                             game.status === 'character_creation' ? '📝 Character Creation' :
+                             game.status === 'active' ? '🎮 Active' :
+                             game.status === 'tpk' ? '💀 TPK' :
+                             game.status === 'won' ? '🎉 Won' :
+                             game.status === 'abandoned' ? '❌ Abandoned' :
+                             game.status}
+                          </span>
+                          <span className="text-gray-500">
+                            {new Date(game.createdAt).toLocaleDateString()}
+                          </span>
+                          {game.playerIds && game.playerIds.length > 0 && (
+                            <span className="text-gray-500">
+                              👥 {game.playerIds.length} player{game.playerIds.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                        </div>
+                      </a>
+                      <div className="flex items-center gap-2">
+                        {userGuild?.canManage && !['tpk', 'won', 'abandoned'].includes(game.status) && (
+                          confirmingAction?.gameId === game.id && confirmingAction.action === 'cancel' ? (
+                            <div className="flex items-center gap-2 bg-yellow-900/30 px-2 py-1 rounded">
+                              <span className="text-xs text-yellow-200">Sure?</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  abandonGameMutation.mutate({ gameId: game.id });
+                                  setConfirmingAction(null);
+                                }}
+                                disabled={abandonGameMutation.isPending}
+                                className="px-2 py-1 text-xs bg-yellow-900 hover:bg-yellow-800 text-yellow-200 rounded transition-colors disabled:opacity-50"
+                              >
+                                Yes
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmingAction(null);
+                                }}
+                                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmingAction({ gameId: game.id, action: 'cancel' });
+                              }}
+                              disabled={abandonGameMutation.isPending}
+                              className="px-3 py-1 text-xs bg-yellow-900/50 hover:bg-yellow-900 text-yellow-200 rounded transition-colors disabled:opacity-50"
+                              title="Cancel game"
+                            >
+                              Cancel
+                            </button>
+                          )
+                        )}
+                        {userGuild?.canManage && (
+                          confirmingAction?.gameId === game.id && confirmingAction.action === 'delete' ? (
+                            <div className="flex items-center gap-2 bg-red-900/30 px-2 py-1 rounded">
+                              <span className="text-xs text-red-200">Sure?</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  deleteGameMutation.mutate({ gameId: game.id });
+                                  setConfirmingAction(null);
+                                }}
+                                disabled={deleteGameMutation.isPending}
+                                className="px-2 py-1 text-xs bg-red-900 hover:bg-red-800 text-red-200 rounded transition-colors disabled:opacity-50"
+                              >
+                                Yes
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmingAction(null);
+                                }}
+                                className="px-2 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded transition-colors"
+                              >
+                                No
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmingAction({ gameId: game.id, action: 'delete' });
+                              }}
+                              disabled={deleteGameMutation.isPending}
+                              className="px-3 py-1 text-xs bg-red-900/50 hover:bg-red-900 text-red-200 rounded transition-colors disabled:opacity-50"
+                              title="Delete game"
+                            >
+                              Delete
+                            </button>
+                          )
+                        )}
+                        <a
+                          href={createGamePath(params.guildSlug || "", game.slug)}
+                          className="flex-shrink-0"
+                        >
+                          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

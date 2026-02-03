@@ -3,6 +3,7 @@ import { gameRouter } from "./game.router";
 import { characterRouter } from "./character.router";
 import { playerRouter } from "./player.router";
 import { guildRouter } from "./guild.router";
+import { scenarioRouter } from "./scenario.router";
 
 // Root tRPC router
 export const appRouter = router({
@@ -10,6 +11,7 @@ export const appRouter = router({
   character: characterRouter,
   player: playerRouter,
   guild: guildRouter,
+  scenario: scenarioRouter,
 });
 
 // Export type for use in frontend

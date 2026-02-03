@@ -1,4 +1,6 @@
 import { GuildMembershipEntity } from '../entities/guild-membership.entity';
+import { GameEntity } from '../entities/game.entity';
+import { postToChannel } from '../../lib/discord-client';
 import { randomUUID } from 'crypto';
 
 export class GuildMembershipService {
@@ -60,6 +62,31 @@ export class GuildMembershipService {
       .set({ optedIn, lastActiveAt: new Date().toISOString() })
       .composite({ playerUsername: existing.playerUsername })
       .go();
+
+    // Check if guild has a staging game and announce roster change
+    try {
+      const stagingGame = await GameEntity.query
+        .byGuild({ guildId })
+        .go();
+      
+      const activeStagingGame = stagingGame.data.find(g => g.status === 'staging');
+      
+      if (activeStagingGame) {
+        // Get current roster count
+        const allMembers = await this.getRoster(guildId);
+        const optedInCount = allMembers.filter(m => m.optedIn).length;
+        
+        const emoji = optedIn ? '✅' : '❌';
+        const action = optedIn ? 'opted in' : 'opted out';
+        const message = `${emoji} <@${existing.playerId}> ${action}! (${optedInCount}/${activeStagingGame.maxPlayers} players)`;
+        
+        await postToChannel(activeStagingGame.channelId, message, guildId);
+      }
+    } catch (error) {
+      console.error('Failed to announce roster change:', error);
+      // Don't fail the opt-in/out operation if announcement fails
+    }
+
     return result.data;
   }
 
