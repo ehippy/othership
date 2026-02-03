@@ -7,34 +7,15 @@
 - **Player Roster**: GuildMembership junction table with opt-in/opt-out
 - **Discord Integration**: Bot notifications for roster changes
 - **Core Infrastructure**: SST Ion deployment, DynamoDB, tRPC API, Vite + React frontend
+- **Scenario Management**: CRUD operations for game scenarios with creator attribution
+- **Creator Application System**: Players can apply to create scenarios, admins approve/reject
+- **Admin System**: Site-wide admin flag, baked into JWT, bypass ownership checks
+- **Authorization**: Protected game creation (opted-in members only), admin controls for cancel/delete
+- **Game Creation**: Admins/opted-in players can create games, select scenarios, Discord announcements with roster
 
 ## 🎯 Next 6 Features (Priority Order)
 
-### 1. Game Creation from Configured Channel
-**Goal**: Admins can start a game session in their configured channel
-
-**Backend Tasks**:
-- [ ] Create Game entity with proper ElectroDB schema
-  - Links to guildId and channelId
-  - Tracks game state (setup, active, completed)
-  - Stores scenario reference
-- [ ] Add `createGame` mutation (admin only)
-  - Validates guild has gameChannel configured
-  - Creates game in "setup" state
-  - Pulls roster from opted-in GuildMembership records
-
-**Frontend Tasks**:
-- [ ] Game channel selector UI (already started in guild page)
-- [ ] "Start Game" button for admins
-- [ ] Game status display (lobby, active, completed)
-
-**Discord Integration**:
-- [ ] Post "🎮 Game starting in #channel-name!" announcement
-- [ ] Include roster list in announcement
-
----
-
-### 2. Character Creation Flow
+### 1. Character Creation Flow
 **Goal**: Players create characters before game starts
 
 **Backend Tasks**:
@@ -58,7 +39,7 @@
 
 ---
 
-### 3. Scenario System & Game Initialization
+### 2. Scenario System & Game Initialization
 **Goal**: Load a scenario template and initialize game state
 
 **Backend Tasks**:
@@ -85,7 +66,7 @@
 
 ---
 
-### 4. Map Visualization with Pixi.js
+### 3. Map Visualization with Pixi.js
 **Goal**: Render game state visually in browser
 
 **Backend Tasks**:
@@ -117,7 +98,7 @@
 
 ---
 
-### 5. Turn System & Basic Movement
+### 4. Turn System & Basic Movement
 **Goal**: Players can move characters on the grid
 
 **Backend Tasks**:
@@ -148,7 +129,7 @@
 
 ---
 
-### 6. Basic Actions & Interactions
+### 5. Basic Actions & Interactions
 **Goal**: Players can interact with objects and each other
 
 **Backend Tasks**:
@@ -211,4 +192,4 @@
 
 ---
 
-**Last Updated**: January 31, 2026
+**Last Updated**: February 2, 2026
