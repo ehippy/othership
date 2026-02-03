@@ -153,19 +153,10 @@ export default function GamePage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white pt-16">
+    <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
+      {/* Content area */}
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          {/* Back button */}
-          <a
-            href={`/${params.guildSlug}`}
-            className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to {userGuild?.name || "guild"}
-          </a>
 
           {/* Game header */}
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-8">
@@ -238,7 +229,7 @@ export default function GamePage() {
         </div>
       </div>
 
-      {/* Top bar */}
+      {/* Top bar in hamburger mode */}
       <TopBar
         avatar={user?.avatar || null}
         discordUserId={user?.discordUserId || null}
@@ -248,6 +239,7 @@ export default function GamePage() {
         selectedGuildName={selectedGuild?.name}
         selectedGuildId={selectedGuild?.id || null}
         selectedGuildIcon={selectedGuild?.icon || null}
+        mode="hamburger"
       />
     </main>
   );

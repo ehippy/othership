@@ -12,13 +12,66 @@ interface TopBarProps {
   selectedGuildName?: string;
   selectedGuildId?: string | null;
   selectedGuildIcon?: string | null;
+  mode?: 'fixed' | 'hamburger';
+  insideHamburger?: boolean;
 }
 
-export function TopBar({ avatar, discordUserId, username, onLogout, onSelectGuild, selectedGuildName, selectedGuildId, selectedGuildIcon }: TopBarProps) {
+export function TopBar({ avatar, discordUserId, username, onLogout, onSelectGuild, selectedGuildName, selectedGuildId, selectedGuildIcon, mode = 'fixed', insideHamburger = false }: TopBarProps) {
   const [showGuilds, setShowGuilds] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const isAuthenticated = !!discordUserId;
+
+  if (mode === 'hamburger') {
+    return (
+      <>
+        {/* Hamburger/Close button */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="fixed top-4 left-4 z-50 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 transition-colors"
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {isMenuOpen ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+
+        {/* Collapsible menu */}
+        {isMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setIsMenuOpen(false)}
+            />
+            
+            {/* Menu content - render the normal TopBar with flag */}
+            <div className="fixed top-0 left-0 right-0 z-40">
+              <TopBar
+                avatar={avatar}
+                discordUserId={discordUserId}
+                username={username}
+                onLogout={onLogout}
+                onSelectGuild={onSelectGuild}
+                selectedGuildName={selectedGuildName}
+                selectedGuildId={selectedGuildId}
+                selectedGuildIcon={selectedGuildIcon}
+                mode="fixed"
+                insideHamburger={true}
+              />
+            </div>
+          </>
+        )}
+      </>
+    );
+  }
+  
+  // Normal fixed TopBar mode
 
   return (
     <>
@@ -69,6 +122,9 @@ export function TopBar({ avatar, discordUserId, username, onLogout, onSelectGuil
 
       {/* Navigation bar */}
       <div className="fixed top-0 left-0 right-0 h-16 bg-gray-800 border-b border-gray-700 flex items-center px-4 z-40 gap-3 sm:gap-6">
+        {/* Spacer for hamburger button when in hamburger mode */}
+        {insideHamburger && <div className="w-12" />}
+        
         {/* Logo */}
         <Link to="/" className="text-lg sm:text-xl font-bold text-white tracking-widest hover:text-gray-300 transition-colors">
           <span className="hidden sm:inline">DERELICT</span>
