@@ -45,6 +45,7 @@ export const PlayerEntity = new Entity(
           properties: {
             id: { type: "string" },
             name: { type: "string" },
+            slug: { type: "string" },
             icon: { type: "string" },
             permissions: { type: "string" },
             botInstalled: { type: "boolean" },

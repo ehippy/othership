@@ -285,7 +285,7 @@ export const playerService = {
 
       const guilds = (await guildsResponse.json()) as DiscordGuildResponse[];
 
-      // Fetch Guild records to get botInstalled status
+      // Fetch Guild records to get botInstalled status and slug
       const guildRecords = await Promise.all(
         guilds.map(async (guild) => {
           try {
@@ -296,15 +296,19 @@ export const playerService = {
           }
         })
       );
-      const guildStatusMap = new Map(guildRecords.filter(g => g !== null).map(g => [g!.discordGuildId, g!.botInstalled]));
+      const guildDataMap = new Map(guildRecords.filter(g => g !== null).map(g => [g!.discordGuildId, g]));
 
-      const mappedGuilds: DiscordGuild[] = guilds.map(guild => ({
-        id: guild.id,
-        name: guild.name,
-        icon: guild.icon || undefined,
-        permissions: guild.permissions,
-        botInstalled: guildStatusMap.get(guild.id) ?? false,
-      }));
+      const mappedGuilds: DiscordGuild[] = guilds.map(guild => {
+        const guildData = guildDataMap.get(guild.id);
+        return {
+          id: guild.id,
+          name: guild.name,
+          slug: guildData?.slug,
+          icon: guild.icon || undefined,
+          permissions: guild.permissions,
+          botInstalled: guildData?.botInstalled ?? false,
+        };
+      });
 
       // Update player's guilds in database
       await this.updateGuilds(playerId, mappedGuilds);

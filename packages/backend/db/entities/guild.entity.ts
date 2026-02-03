@@ -25,6 +25,10 @@ export const GuildEntity = new Entity(
         type: 'string',
         required: false,
       },
+      slug: {
+        type: 'string',
+        required: true,
+      },
       botInstalled: {
         type: 'boolean',
         required: true,
@@ -75,6 +79,17 @@ export const GuildEntity = new Entity(
         },
         sk: {
           field: 'gsi1sk',
+          composite: [],
+        },
+      },
+      bySlug: {
+        index: 'gsi4',
+        pk: {
+          field: 'gsi4pk',
+          composite: ['slug'],
+        },
+        sk: {
+          field: 'gsi4sk',
           composite: [],
         },
       },

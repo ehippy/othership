@@ -106,7 +106,7 @@ export async function handler(
 
     const guilds = (await guildsResponse.json()) as DiscordGuild[];
 
-    // Fetch Guild records to get botInstalled status
+    // Fetch Guild records to get botInstalled status and slug
     const { guildService } = await import("../../db/services");
     const guildRecords = await Promise.all(
       guilds.map(async (guild) => {
@@ -117,16 +117,20 @@ export async function handler(
         }
       })
     );
-    const guildStatusMap = new Map(guildRecords.filter(g => g !== null).map(g => [g!.discordGuildId, g!.botInstalled]));
+    const guildDataMap = new Map(guildRecords.filter(g => g !== null).map(g => [g!.discordGuildId, g]));
 
     // Map guilds to the format expected by our database (include permissions for access control)
-    const mappedGuilds = guilds.map(guild => ({
-      id: guild.id,
-      name: guild.name,
-      icon: guild.icon || undefined,
-      permissions: guild.permissions, // Discord permission bitfield for this user in this guild
-      botInstalled: guildStatusMap.get(guild.id) ?? false,
-    }));
+    const mappedGuilds = guilds.map(guild => {
+      const guildData = guildDataMap.get(guild.id);
+      return {
+        id: guild.id,
+        name: guild.name,
+        slug: guildData?.slug,
+        icon: guild.icon || undefined,
+        permissions: guild.permissions, // Discord permission bitfield for this user in this guild
+        botInstalled: guildData?.botInstalled ?? false,
+      };
+    });
 
     // Create or update player (without gameId - they'll join games later)
     const existingPlayers = await playerService.getPlayersByDiscordUser(user.id);

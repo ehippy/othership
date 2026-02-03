@@ -83,6 +83,16 @@ export default function ScenariosPage() {
     },
   });
 
+  // Backfill slugs mutation (admin only)
+  const backfillSlugsMutation = trpc.player.backfillSlugs.useMutation({
+    onSuccess: (result) => {
+      alert(`Backfill complete!\nGuilds: ${result.guildsUpdated}/${result.guildsProcessed} updated\nScenarios: ${result.scenariosUpdated}/${result.scenariosProcessed} updated`);
+    },
+    onError: (error: any) => {
+      alert(`Failed to backfill slugs: ${error.message}`);
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createScenarioMutation.mutate(formData);
@@ -202,6 +212,24 @@ export default function ScenariosPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Admin Utilities */}
+          {user.isAdmin && (
+            <div className="bg-gray-800 border-2 border-purple-600 rounded-lg p-6 mb-8">
+              <h2 className="text-2xl font-bold mb-4 text-purple-400">🔧 Admin Utilities</h2>
+              <button
+                onClick={() => {
+                  if (confirm('Backfill slugs for all guilds and scenarios? This is safe to run multiple times.')) {
+                    backfillSlugsMutation.mutate();
+                  }
+                }}
+                disabled={backfillSlugsMutation.isPending}
+                className="px-6 py-3 bg-purple-900 hover:bg-purple-800 text-purple-200 rounded transition-colors disabled:opacity-50 font-semibold"
+              >
+                {backfillSlugsMutation.isPending ? "Running..." : "🔄 Backfill Slugs"}
+              </button>
             </div>
           )}
 

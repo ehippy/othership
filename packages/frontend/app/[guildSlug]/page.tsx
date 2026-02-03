@@ -4,7 +4,7 @@ import { TopBar } from "@/components/TopBar";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
-import { parseGuildPath, createGamePath, formatGameName, getGuildIconUrl } from "@/lib/utils";
+import { createGamePath, formatGameName, getGuildIconUrl } from "@/lib/utils";
 import { PlayerRoster } from "@/components/game/PlayerRoster";
 import type { Scenario } from "@derelict/shared";
 
@@ -23,26 +23,35 @@ export default function GuildPage() {
     enabled: !authLoading,
   });
 
-  // Parse guild ID from slug
-  const guildId = parseGuildPath(`/${params.guildSlug}`);
-
-  // Fetch guild data
-  const { data: guild, isLoading: guildLoading, refetch: refetchGuild } = trpc.guild.get.useQuery(
-    { discordGuildId: guildId || "" },
-    { enabled: !!guildId }
+  // Fetch guild data by slug
+  const { data: guild, isLoading: guildLoading, error: guildError, refetch: refetchGuild } = trpc.guild.getBySlug.useQuery(
+    { slug: params.guildSlug || "" },
+    { enabled: !!params.guildSlug }
   );
+
+  // Derive guildId from either cached or queried guild data
+  const userGuild = guilds?.find((g) => g.slug === params.guildSlug);
+  const guildId = guild?.discordGuildId || userGuild?.id || "";
 
   // Fetch roster for game creation validation
   const { data: roster } = trpc.guild.getRoster.useQuery(
-    { discordGuildId: guildId || "" },
-    { enabled: !!guildId && !!guild?.gameChannelId }
+    { discordGuildId: guild?.discordGuildId || "" },
+    { enabled: !!guild?.discordGuildId && !!guild?.gameChannelId }
   );
 
   // Fetch active game
-  const { data: activeGame, refetch: refetchActiveGame } = trpc.game.getActiveByGuild.useQuery(
-    { guildId: guildId || "" },
+  const { data: activeGame, error: activeGameError, refetch: refetchActiveGame } = trpc.game.getActiveByGuild.useQuery(
+    { guildId: guildId },
     { enabled: !!guildId && !!guild?.gameChannelId }
   );
+
+  // Log for debugging
+  React.useEffect(() => {
+    console.log('Guild data:', guild);
+    console.log('guildId:', guildId);
+    console.log('Active game:', activeGame);
+    console.log('Active game error:', activeGameError);
+  }, [guild, guildId, activeGame, activeGameError]);
 
   // Fetch scenarios
   const { data: scenarios } = trpc.scenario.listScenarios.useQuery(undefined, {
@@ -51,7 +60,7 @@ export default function GuildPage() {
 
   // Fetch all games for the guild
   const { data: allGames, refetch: refetchAllGames } = trpc.game.listByGuild.useQuery(
-    { guildId: guildId || "" },
+    { guildId: guildId },
     { enabled: !!guildId && !!guild?.gameChannelId }
   );
 
@@ -90,10 +99,9 @@ export default function GuildPage() {
   });
 
   // Fetch channels only when editing or no channel configured (admin only)
-  const userGuild = guilds?.find((g) => g.id === guildId);
   const shouldFetchChannels = !!guildId && userGuild?.canManage === true && (isEditingChannel || !guild?.gameChannelId);
   const { data: channels, isLoading: channelsLoading, refetch: refetchChannels, isFetching: channelsFetching } = trpc.guild.getChannels.useQuery(
-    { discordGuildId: guildId || "" },
+    { discordGuildId: guildId },
     { enabled: shouldFetchChannels }
   );
 
@@ -159,6 +167,17 @@ export default function GuildPage() {
   // Use cached guild data for immediate render, guild.get data for gameChannelId
   const displayGuild = userGuild || guild;
   
+  // Show error if guild query failed
+  if (guildError) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white">
+        <div className="text-center">
+          <p className="text-red-400">Error loading guild: {guildError.message}</p>
+        </div>
+      </main>
+    );
+  }
+  
   // Only show "not found" if guilds have loaded and guild is still missing
   if (!displayGuild && !guildsLoading) {
     return (
@@ -216,7 +235,7 @@ export default function GuildPage() {
               {/* Player Roster - Left */}
               <div>
                 <PlayerRoster
-                  guildId={guildId || ""}
+                  guildId={guildId}
                   currentUserId={user?.discordUserId || null}
                   canManage={userGuild?.canManage || false}
                 />

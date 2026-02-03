@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "./trpc";
-import { gameService, playerService } from "../../db/services";
+import { gameService, playerService, guildService } from "../../db/services";
 import { guildMembershipService } from "../../db/services/guild-membership.service";
 import { postToChannel } from "../../lib/discord-client";
 import { formatGameName } from "@derelict/shared";
@@ -88,7 +88,14 @@ export const gameRouter = router({
       return games[0] || null; // Return first active game or null
     }),
 
-  // Get game by guild and slug
+  // Get game by guild slug and game slug
+  getByGuildSlugAndGameSlug: publicProcedure
+    .input(z.object({ guildSlug: z.string(), gameSlug: z.string() }))
+    .query(async ({ input }) => {
+      return await gameService.getByGuildSlugAndGameSlug(input.guildSlug, input.gameSlug);
+    }),
+
+  // Get game by guild and slug (legacy - internal IDs)
   getByGuildAndSlug: publicProcedure
     .input(z.object({ guildId: z.string(), slug: z.string() }))
     .query(async ({ input }) => {

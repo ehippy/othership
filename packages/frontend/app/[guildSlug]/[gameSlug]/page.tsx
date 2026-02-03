@@ -4,34 +4,30 @@ import { TopBar } from "@/components/TopBar";
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
-import { parseGuildPath, parseGameSlug, formatGameName, getAvatarUrl } from "@/lib/utils";
+import { formatGameName, getAvatarUrl } from "@/lib/utils";
 
 export default function GamePage() {
   const params = useParams<{ guildSlug: string; gameSlug: string }>();
   const { isLoading: authLoading, user, logout } = useAuth();
   const { selectedGuild, selectGuild, guilds } = useGuildSelection();
 
-  // Parse IDs from slugs
-  const guildId = parseGuildPath(`/${params.guildSlug}`);
-  const gameId = parseGameSlug(params.gameSlug || "");
-
-  // Fetch game data
-  const { data: game, isLoading: gameLoading } = trpc.game.getByGuildAndSlug.useQuery(
-    { guildId: guildId || "", slug: params.gameSlug || "" },
-    { enabled: !!guildId && !!params.gameSlug }
+  // Fetch game data using slug-based lookup
+  const { data: game, isLoading: gameLoading } = trpc.game.getByGuildSlugAndGameSlug.useQuery(
+    { guildSlug: params.guildSlug || "", gameSlug: params.gameSlug || "" },
+    { enabled: !!params.guildSlug && !!params.gameSlug }
   );
 
   // Fetch current roster (for staging games)
   const { data: roster, refetch: refetchRoster } = trpc.game.getCurrentRoster.useQuery(
-    { guildId: guildId || "" },
+    { guildId: game?.guildId || "" },
     { 
-      enabled: !!guildId && game?.status === "staging",
+      enabled: !!game?.guildId && game?.status === "staging",
       refetchInterval: game?.status === "staging" ? 10000 : false, // Poll every 10s during staging
     }
   );
 
   // Fetch guild info for display
-  const userGuild = guilds?.find((g) => g.id === guildId);
+  const userGuild = guilds?.find((g) => g.id === game?.guildId);
 
   // Calculate countdown for staging games
   const [timeRemaining, setTimeRemaining] = useState<string>("");

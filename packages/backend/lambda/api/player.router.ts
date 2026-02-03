@@ -155,4 +155,98 @@ export const playerRouter = router({
 
       return updatedPlayer;
     }),
+
+  /**
+   * Backfill slugs for all guilds and scenarios (admin only)
+   */
+  backfillSlugs: adminProcedure.mutation(async () => {
+    console.log('[player.backfillSlugs] Starting slug backfill...');
+    
+    const { GuildEntity } = await import("../../db/entities/guild.entity");
+    const { ScenarioEntity } = await import("../../db/entities/scenario.entity");
+    
+    function slugify(text: string): string {
+      return text
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50);
+    }
+    
+    const results = {
+      guildsProcessed: 0,
+      guildsUpdated: 0,
+      scenariosProcessed: 0,
+      scenariosUpdated: 0,
+    };
+    
+    // Backfill guild slugs
+    const guildsResult = await GuildEntity.scan.go();
+    const guilds = guildsResult.data;
+    const usedGuildSlugs = new Set<string>();
+    
+    for (const guild of guilds) {
+      results.guildsProcessed++;
+      
+      if (guild.slug) {
+        usedGuildSlugs.add(guild.slug);
+        continue;
+      }
+      
+      const baseSlug = slugify(guild.name);
+      let slug = baseSlug;
+      let suffix = 1;
+      
+      while (usedGuildSlugs.has(slug)) {
+        suffix++;
+        slug = `${baseSlug}-${suffix}`;
+      }
+      
+      usedGuildSlugs.add(slug);
+      
+      await GuildEntity.patch({ id: guild.id })
+        .set({ slug })
+        .go();
+      
+      console.log(`[backfillSlugs] Updated guild ${guild.name} with slug: ${slug}`);
+      results.guildsUpdated++;
+    }
+    
+    // Backfill scenario slugs
+    const scenariosResult = await ScenarioEntity.scan.go();
+    const scenarios = scenariosResult.data;
+    const usedScenarioSlugs = new Set<string>();
+    
+    for (const scenario of scenarios) {
+      results.scenariosProcessed++;
+      
+      if (scenario.slug) {
+        usedScenarioSlugs.add(scenario.slug);
+        continue;
+      }
+      
+      const baseSlug = slugify(scenario.name);
+      let slug = baseSlug;
+      let suffix = 1;
+      
+      while (usedScenarioSlugs.has(slug)) {
+        suffix++;
+        slug = `${baseSlug}-${suffix}`;
+      }
+      
+      usedScenarioSlugs.add(slug);
+      
+      await ScenarioEntity.patch({ id: scenario.id })
+        .set({ slug })
+        .go();
+      
+      console.log(`[backfillSlugs] Updated scenario ${scenario.name} with slug: ${slug}`);
+      results.scenariosUpdated++;
+    }
+    
+    console.log('[player.backfillSlugs] Backfill complete:', results);
+    return results;
+  }),
 });

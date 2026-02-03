@@ -51,6 +51,7 @@ export interface Entity {
 export interface DiscordGuild {
   id: string;
   name: string;
+  slug?: string; // URL-safe slug for pretty URLs
   icon?: string;
   permissions?: string; // Discord permission bitfield
   botInstalled?: boolean; // Whether Derelict bot is installed in this guild
@@ -96,6 +97,7 @@ export interface Game {
 export interface Scenario {
   id: string;
   name: string;
+  slug: string;
   description: string;
   difficulty: 'tutorial' | 'easy' | 'medium' | 'hard' | 'deadly';
   minPlayers: number;

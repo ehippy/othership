@@ -6,7 +6,20 @@ import { fetchGuildChannels, validateChannelPermissions, postToChannel } from ".
 
 export const guildRouter = router({
   /**
-   * Get guild info by Discord guild ID
+   * Get guild info by slug
+   */
+  getBySlug: protectedProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      const guild = await guildService.getGuildBySlug(input.slug);
+      if (!guild) {
+        throw new Error("Guild not found");
+      }
+      return guild;
+    }),
+
+  /**
+   * Get guild info by Discord guild ID (legacy)
    */
   get: protectedProcedure
     .input(z.object({ discordGuildId: z.string() }))

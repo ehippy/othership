@@ -1,10 +1,10 @@
 /**
  * Format a game slug as Title Case display name
- * Example: "dying-signal-gTKNJGK" -> "Dying Signal"
+ * Handles both old format (dying-signal-gTKNJGK) and new format (abandoned-mining-station or abandoned-mining-station-2)
  */
 export function formatGameName(slug: string): string {
-  // Remove the game ID suffix (-gXXXXXX)
-  const nameOnly = slug.replace(/-g[A-Z0-9]{6}$/, '');
+  // Remove numeric suffix if present (e.g., "-2", "-3" from multiple runs of same scenario)
+  const nameOnly = slug.replace(/-\d+$/, '');
   
   // Split by hyphens and capitalize each word
   return nameOnly

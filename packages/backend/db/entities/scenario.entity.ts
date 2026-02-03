@@ -18,6 +18,10 @@ export const ScenarioEntity = new Entity(
         type: "string",
         required: true,
       },
+      slug: {
+        type: "string",
+        required: true,
+      },
       description: {
         type: "string",
         required: true,
@@ -72,6 +76,17 @@ export const ScenarioEntity = new Entity(
         },
         sk: {
           field: "sk",
+          composite: [],
+        },
+      },
+      bySlug: {
+        index: "gsi5",
+        pk: {
+          field: "gsi5pk",
+          composite: ["slug"],
+        },
+        sk: {
+          field: "gsi5sk",
           composite: [],
         },
       },

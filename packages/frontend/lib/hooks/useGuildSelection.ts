@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { trpc } from "@/lib/api/trpc";
 import { isAuthenticated } from "@/lib/auth";
-import { createGuildPath, parseGuildPath } from "@/lib/utils";
+import { createGuildPath } from "@/lib/utils";
 
 interface Guild {
   id: string;
   name: string;
   icon?: string;
+  slug?: string;
   botInstalled?: boolean;
 }
 
 interface SelectedGuild {
   id: string;
   name: string;
+  slug: string;
   icon: string | null;
 }
 
@@ -37,7 +39,7 @@ export function useGuildSelection() {
         // Find the guild that was just connected and navigate to it
         const addedGuild = result.data?.find((g: Guild) => g.id === event.data.guildId);
         if (addedGuild) {
-          selectGuild(addedGuild.id, addedGuild.name, addedGuild.icon);
+          selectGuild(addedGuild.id, addedGuild.name, addedGuild.slug || '', addedGuild.icon);
         }
       }
     };
@@ -53,18 +55,20 @@ export function useGuildSelection() {
       return;
     }
 
-    const guildId = parseGuildPath(location.pathname);
-    if (!guildId) {
+    // Extract guild slug from path (first segment)
+    const guildSlug = location.pathname.split('/')[1];
+    if (!guildSlug) {
       setSelectedGuild(null);
       return;
     }
     
-    const matchedGuild = guilds.find((g: Guild) => g.id === guildId && g.botInstalled);
+    const matchedGuild = guilds.find((g: Guild) => g.slug === guildSlug && g.botInstalled);
     
     if (matchedGuild) {
       setSelectedGuild({
         id: matchedGuild.id,
         name: matchedGuild.name,
+        slug: matchedGuild.slug || '',
         icon: matchedGuild.icon || null,
       });
     } else {
@@ -72,15 +76,16 @@ export function useGuildSelection() {
     }
   }, [guilds, location.pathname]);
 
-  const selectGuild = (guildId: string, guildName: string, guildIcon?: string) => {
+  const selectGuild = (guildId: string, guildName: string, guildSlug: string, guildIcon?: string) => {
     setSelectedGuild({
       id: guildId,
       name: guildName,
+      slug: guildSlug,
       icon: guildIcon || null,
     });
     
     // Navigate to guild page with pretty URL slug
-    const path = createGuildPath(guildName, guildId);
+    const path = createGuildPath(guildSlug);
     navigate(path);
   };
 

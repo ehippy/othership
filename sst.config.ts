@@ -39,12 +39,18 @@ export default $config({
         gsi2sk: "string",
         gsi3pk: "string",
         gsi3sk: "string",
+        gsi4pk: "string",
+        gsi4sk: "string",
+        gsi5pk: "string",
+        gsi5sk: "string",
       },
       primaryIndex: { hashKey: "pk", rangeKey: "sk" },
       globalIndexes: {
         gsi1: { hashKey: "gsi1pk", rangeKey: "gsi1sk" },
         gsi2: { hashKey: "gsi2pk", rangeKey: "gsi2sk" },
         gsi3: { hashKey: "gsi3pk", rangeKey: "gsi3sk" },
+        gsi4: { hashKey: "gsi4pk", rangeKey: "gsi4sk" },
+        gsi5: { hashKey: "gsi5pk", rangeKey: "gsi5sk" },
       },
       transform: {
         table: {

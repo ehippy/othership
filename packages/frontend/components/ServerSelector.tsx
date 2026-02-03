@@ -4,12 +4,13 @@ import { getGuildIconUrl } from "@/lib/utils";
 
 interface ServerSelectorProps {
   onClose: () => void;
-  onSelectGuild: (guildId: string, guildName: string, guildIcon?: string) => void;
+  onSelectGuild: (guildId: string, guildName: string, guildSlug: string, guildIcon?: string) => void;
 }
 
 interface Guild {
   id: string;
   name: string;
+  slug?: string;
   icon?: string;
   botInstalled?: boolean;
   canManage?: boolean;
@@ -35,8 +36,8 @@ export function ServerSelector({ onClose, onSelectGuild }: ServerSelectorProps) 
   };
 
   const handleSelectGuild = (guild: Guild) => {
-    if (guild.botInstalled) {
-      onSelectGuild(guild.id, guild.name, guild.icon);
+    if (guild.botInstalled && guild.slug) {
+      onSelectGuild(guild.id, guild.name, guild.slug, guild.icon);
       onClose();
     }
   };
