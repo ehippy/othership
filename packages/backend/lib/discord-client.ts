@@ -59,8 +59,30 @@ async function handleDiscordError(response: Response, guildId?: string): Promise
     if (!stillInGuild) {
       console.log(`[discord-client] Confirmed: Bot is not in guild ${guildId}`);
       try {
+        const guild = await guildService.getGuildByDiscordId(guildId);
         await guildService.markBotUninstalled(guildId);
         console.log(`[discord-client] Marked guild ${guildId} as bot uninstalled`);
+        
+        // Send notification to admin channel about bot removal
+        if (guild) {
+          try {
+            await postEmbed(
+              Resource.AdminNotificationChannelId.value,
+              {
+                title: "🚫 Bot Removed from Server",
+                description: `**${guild.name}** has removed the bot`,
+                color: 0xF04747, // Red
+                fields: [
+                  { name: "Guild ID", value: guildId, inline: true },
+                  { name: "Removed", value: new Date().toISOString(), inline: true },
+                ],
+              }
+            );
+          } catch (notifyError) {
+            console.error(`[discord-client] Failed to send removal notification:`, notifyError);
+            // Don't fail the removal if notification fails
+          }
+        }
       } catch (err) {
         console.error(`[discord-client] Failed to mark guild ${guildId} as uninstalled:`, err);
       }

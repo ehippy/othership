@@ -1,6 +1,7 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { guildService } from "../../db/services";
-import { fetchGuildInfo } from "../../lib/discord-client";
+import { fetchGuildInfo, postEmbed } from "../../lib/discord-client";
+import { Resource } from "sst";
 
 /**
  * Handle Discord OAuth callback when bot is added to a guild
@@ -41,6 +42,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     // Create or update guild record
     const existingGuild = await guildService.getGuildByDiscordId(guildId);
     
+    let isNewInstall = false;
+    
     if (existingGuild) {
       console.log("[bot-added] Guild exists, marking as installed");
       await guildService.markBotInstalled(guildId);
@@ -48,6 +51,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         name: guildInfo.name,
         icon: guildInfo.icon || undefined,
       });
+      // Check if this is a reinstall
+      isNewInstall = !existingGuild.botInstalled;
     } else {
       console.log("[bot-added] Creating new guild record");
       await guildService.createGuild({
@@ -57,6 +62,30 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
         botInstalled: true,
         installedAt: new Date().toISOString(),
       });
+      isNewInstall = true;
+    }
+
+    console.log("[bot-added] Successfully processed guild");
+
+    // Send notification to admin channel about new installation
+    if (isNewInstall) {
+      try {
+        await postEmbed(
+          Resource.AdminNotificationChannelId.value,
+          {
+            title: "🤖 Bot Added to New Server",
+            description: `**${guildInfo.name}** has installed the bot`,
+            color: 0x43B581, // Green
+            fields: [
+              { name: "Guild ID", value: guildId, inline: true },
+              { name: "Added", value: new Date().toISOString(), inline: true },
+            ],
+          }
+        );
+      } catch (error) {
+        console.error("[bot-added] Failed to send notification:", error);
+        // Don't fail the installation if notification fails
+      }
     }
 
     console.log("[bot-added] Successfully processed guild");
