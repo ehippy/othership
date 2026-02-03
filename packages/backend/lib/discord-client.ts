@@ -63,8 +63,8 @@ async function handleDiscordError(response: Response, guildId?: string): Promise
         await guildService.markBotUninstalled(guildId);
         console.log(`[discord-client] Marked guild ${guildId} as bot uninstalled`);
         
-        // Send notification to admin channel about bot removal
-        if (guild) {
+        // Send notification only if this is the first detection (was previously installed)
+        if (guild && guild.botInstalled) {
           try {
             await postEmbed(
               Resource.AdminNotificationChannelId.value,

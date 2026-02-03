@@ -129,7 +129,7 @@ export default $config({
 
     api.route("GET /auth/bot-added", {
       handler: "packages/backend/lambda/auth/bot-added.handler",
-      link: [table, discordBotToken],
+      link: [table, discordBotToken, adminNotificationChannelId],
       timeout: "10 seconds",
       memory: "512 MB",
       logging: {
