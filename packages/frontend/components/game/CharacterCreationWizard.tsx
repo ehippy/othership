@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { trpc } from "@/lib/api/trpc";
 import type { Character } from "@derelict/shared";
-import { CLASS_MODIFIERS, getStatModifier, getSaveModifier, CLASS_STARTING_SKILLS, getSkillTree, isSkillUnlocked, getRemainingBonusSlots, validateSkillSelection } from "@derelict/shared";
+import { CLASS_MODIFIERS, getStatModifier, getSaveModifier, CLASS_STARTING_SKILLS, getSkillTree, isSkillUnlocked, getRemainingBonusSlots, validateSkillSelection, getMasterSkillChain } from "@derelict/shared";
 import { AVATAR_LIST, getRandomAvatar } from "@/lib/avatars";
 import { StatsDisplay } from "./StatsDisplay";
 import { SkillChip } from "./SkillChip";
@@ -335,7 +335,13 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
           if (!classConfig) return null;
 
           // Get starting skills for this class
-          const startingSkills = classConfig.starting || [];
+          // For Scientists, treat the master chain (first 3 skills) as starting skills once selected
+          let startingSkills = classConfig.starting || [];
+          let bonusSkills = formData.skills;
+          if (classConfig.requiresMasterSelection && formData.skills.length >= 3) {
+            startingSkills = formData.skills.slice(0, 3); // First 3 are the master chain
+            bonusSkills = formData.skills.slice(3); // Rest are bonus selections
+          }
           
           // For Scientist, if no starting skills selected yet, need to select Master skill chain
           const needsMasterSelection = classConfig.requiresMasterSelection && formData.skills.length === 0;
@@ -343,7 +349,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
           // Calculate remaining bonus slots
           const remaining = getRemainingBonusSlots(
             formData.characterClass!,
-            formData.skills,
+            bonusSkills,
             startingSkills,
             formData.bonusChoiceIndex
           );
@@ -351,7 +357,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
           // Check if skill can be toggled
           const canToggleSkill = (skillId: string, tier: 'trained' | 'expert' | 'master') => {
             const isStarting = startingSkills.includes(skillId);
-            const isSelected = formData.skills.includes(skillId);
+            const isSelected = bonusSkills.includes(skillId);
             
             // Can't toggle starting skills
             if (isStarting) return false;
@@ -360,12 +366,12 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
             if (!isSelected) {
               if (remaining[tier] <= 0) return false;
               // Include starting skills when checking prerequisites
-              const allSkills = [...startingSkills, ...formData.skills];
+              const allSkills = [...startingSkills, ...bonusSkills];
               return isSkillUnlocked(skillId, allSkills, skillTree);
             }
             
             // If deselecting, check if any selected skills depend on this one
-            const dependents = formData.skills.filter(id => {
+            const dependents = bonusSkills.filter(id => {
               const skill = skillTree.skills.find(s => s.id === id);
               return skill?.unlocked_by?.includes(skillId);
             });
@@ -376,11 +382,29 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
           const handleToggleSkill = (skillId: string, tier: 'trained' | 'expert' | 'master') => {
             if (!canToggleSkill(skillId, tier)) return;
             
-            const isSelected = formData.skills.includes(skillId);
+            const isSelected = bonusSkills.includes(skillId);
             if (isSelected) {
-              setFormData({ ...formData, skills: formData.skills.filter(id => id !== skillId) });
+              // Remove from bonus skills (but keep the full formData.skills for Scientists)
+              const newBonusSkills = bonusSkills.filter(id => id !== skillId);
+              const newAllSkills = classConfig.requiresMasterSelection && formData.skills.length >= 3
+                ? [...formData.skills.slice(0, 3), ...newBonusSkills]
+                : newBonusSkills;
+              setFormData({ ...formData, skills: newAllSkills });
             } else {
-              setFormData({ ...formData, skills: [...formData.skills, skillId] });
+              // Add to bonus skills
+              const newBonusSkills = [...bonusSkills, skillId];
+              const newAllSkills = classConfig.requiresMasterSelection && formData.skills.length >= 3
+                ? [...formData.skills.slice(0, 3), ...newBonusSkills]
+                : newBonusSkills;
+              setFormData({ ...formData, skills: newAllSkills });
+            }
+          };
+
+          const handleSelectMasterSkill = (masterId: string) => {
+            const chain = getMasterSkillChain(masterId, skillTree);
+            if (chain) {
+              // Replace all skills with this master chain (IDs only)
+              setFormData({ ...formData, skills: [chain.master.id, chain.expert.id, chain.trained.id] });
             }
           };
 
@@ -394,7 +418,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
 
           const validation = validateSkillSelection(
             formData.characterClass!,
-            formData.skills,
+            bonusSkills,
             startingSkills,
             formData.bonusChoiceIndex
           );
@@ -444,8 +468,27 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                 </div>
               )}
 
-              {/* Show starting skills */}
-              {startingSkills.length > 0 && (
+              {/* Show starting skills or master selection for Scientist */}
+              {classConfig.requiresMasterSelection && needsMasterSelection ? (
+                <div className="mb-6 p-4 bg-purple-900/30 border border-purple-500 rounded">
+                  <h4 className="text-lg font-semibold text-purple-400 mb-2">First, Choose Your Master Skill</h4>
+                  <p className="text-sm text-gray-300 mb-4">Selecting a Master skill automatically includes its prerequisite Expert and Trained skills. After this, you'll choose 1 bonus Trained skill.</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {skillTree.skills
+                      .filter(s => s.tier === 'master')
+                      .map(skill => (
+                        <button
+                          key={skill.id}
+                          onClick={() => handleSelectMasterSkill(skill.id)}
+                          className="p-3 bg-purple-900/50 hover:bg-purple-800 border border-purple-500 rounded text-left transition-colors"
+                        >
+                          <div className="font-semibold text-purple-300">{skill.name}</div>
+                          <div className="text-xs text-gray-400 mt-1">+20 bonus</div>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              ) : startingSkills.length > 0 && (
                 <div className="mb-4">
                   <h4 className="text-sm font-semibold text-indigo-400 mb-2 capitalize">{character.characterClass} Starting Skills (Included):</h4>
                   <div className="flex flex-wrap gap-2">
@@ -476,7 +519,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                 </div>
               )}
 
-              {/* Skill tree by tier */}
+              {/* Skill tree by tier - only show if not waiting for master selection */}
+              {!needsMasterSelection && (
               <div className="space-y-6 max-h-96 overflow-y-auto">
                 {/* Trained Skills */}
                 {(() => {
@@ -485,8 +529,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                     .filter(skill => {
                       // Only show starting skills, selected skills, or unlocked skills
                       const isStarting = startingSkills.includes(skill.id);
-                      const isSelected = formData.skills.includes(skill.id);
-                      const allSkills = [...startingSkills, ...formData.skills];
+                      const isSelected = bonusSkills.includes(skill.id);
+                      const allSkills = [...startingSkills, ...bonusSkills];
                       const isUnlocked = isSkillUnlocked(skill.id, allSkills, skillTree);
                       const canToggle = canToggleSkill(skill.id, 'trained');
                       return isStarting || isSelected || (isUnlocked && canToggle);
@@ -500,11 +544,11 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                       <div className="grid grid-cols-3 gap-2">
                         {trainedSkills
                           .sort((a, b) => {
-                            const allSkills = [...startingSkills, ...formData.skills];
+                            const allSkills = [...startingSkills, ...bonusSkills];
                             const aUnlocked = isSkillUnlocked(a.id, allSkills, skillTree);
                             const bUnlocked = isSkillUnlocked(b.id, allSkills, skillTree);
-                            const aSelected = formData.skills.includes(a.id) || startingSkills.includes(a.id);
-                            const bSelected = formData.skills.includes(b.id) || startingSkills.includes(b.id);
+                            const aSelected = bonusSkills.includes(a.id) || startingSkills.includes(a.id);
+                            const bSelected = bonusSkills.includes(b.id) || startingSkills.includes(b.id);
                             
                             // Sort: selected first, then unlocked, then locked
                             if (aSelected !== bSelected) return aSelected ? -1 : 1;
@@ -513,8 +557,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                           })
                           .map(skill => {
                       const isStarting = startingSkills.includes(skill.id);
-                      const isSelected = formData.skills.includes(skill.id);
-                      const allSkills = [...startingSkills, ...formData.skills];
+                      const isSelected = bonusSkills.includes(skill.id);
+                      const allSkills = [...startingSkills, ...bonusSkills];
                       const isUnlocked = isSkillUnlocked(skill.id, allSkills, skillTree);
                       const canToggle = canToggleSkill(skill.id, 'trained');
                       
@@ -547,8 +591,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                     .filter(skill => {
                       // Only show starting skills, selected skills, or unlocked skills
                       const isStarting = startingSkills.includes(skill.id);
-                      const isSelected = formData.skills.includes(skill.id);
-                      const allSkills = [...startingSkills, ...formData.skills];
+                      const isSelected = bonusSkills.includes(skill.id);
+                      const allSkills = [...startingSkills, ...bonusSkills];
                       const isUnlocked = isSkillUnlocked(skill.id, allSkills, skillTree);
                       const canToggle = canToggleSkill(skill.id, 'expert');
                       return isStarting || isSelected || (isUnlocked && canToggle);
@@ -562,11 +606,11 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                       <div className="grid grid-cols-3 gap-2">
                         {expertSkills
                           .sort((a, b) => {
-                            const allSkills = [...startingSkills, ...formData.skills];
+                            const allSkills = [...startingSkills, ...bonusSkills];
                             const aUnlocked = isSkillUnlocked(a.id, allSkills, skillTree);
                             const bUnlocked = isSkillUnlocked(b.id, allSkills, skillTree);
-                            const aSelected = formData.skills.includes(a.id) || startingSkills.includes(a.id);
-                            const bSelected = formData.skills.includes(b.id) || startingSkills.includes(b.id);
+                            const aSelected = bonusSkills.includes(a.id) || startingSkills.includes(a.id);
+                            const bSelected = bonusSkills.includes(b.id) || startingSkills.includes(b.id);
                             
                             // Sort: selected first, then unlocked, then locked
                             if (aSelected !== bSelected) return aSelected ? -1 : 1;
@@ -575,8 +619,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                           })
                           .map(skill => {
                       const isStarting = startingSkills.includes(skill.id);
-                      const isSelected = formData.skills.includes(skill.id);
-                      const allSkills = [...startingSkills, ...formData.skills];
+                      const isSelected = bonusSkills.includes(skill.id);
+                      const allSkills = [...startingSkills, ...bonusSkills];
                       const isUnlocked = isSkillUnlocked(skill.id, allSkills, skillTree);
                       const canToggle = canToggleSkill(skill.id, 'expert');
                       
@@ -614,8 +658,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                     .filter(skill => {
                       // Only show starting skills, selected skills, or unlocked skills
                       const isStarting = startingSkills.includes(skill.id);
-                      const isSelected = formData.skills.includes(skill.id);
-                      const allSkills = [...startingSkills, ...formData.skills];
+                      const isSelected = bonusSkills.includes(skill.id);
+                      const allSkills = [...startingSkills, ...bonusSkills];
                       const isUnlocked = isSkillUnlocked(skill.id, allSkills, skillTree);
                       const canToggle = canToggleSkill(skill.id, 'master');
                       return isStarting || isSelected || (isUnlocked && canToggle);
@@ -629,11 +673,11 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                       <div className="grid grid-cols-3 gap-2">
                         {masterSkills
                           .sort((a, b) => {
-                            const allSkills = [...startingSkills, ...formData.skills];
+                            const allSkills = [...startingSkills, ...bonusSkills];
                             const aUnlocked = isSkillUnlocked(a.id, allSkills, skillTree);
                             const bUnlocked = isSkillUnlocked(b.id, allSkills, skillTree);
-                            const aSelected = formData.skills.includes(a.id) || startingSkills.includes(a.id);
-                            const bSelected = formData.skills.includes(b.id) || startingSkills.includes(b.id);
+                            const aSelected = bonusSkills.includes(a.id) || startingSkills.includes(a.id);
+                            const bSelected = bonusSkills.includes(b.id) || startingSkills.includes(b.id);
                             
                             // Sort: selected first, then unlocked, then locked
                             if (aSelected !== bSelected) return aSelected ? -1 : 1;
@@ -642,8 +686,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                           })
                           .map(skill => {
                       const isStarting = startingSkills.includes(skill.id);
-                      const isSelected = formData.skills.includes(skill.id);
-                      const allSkills = [...startingSkills, ...formData.skills];
+                      const isSelected = bonusSkills.includes(skill.id);
+                      const allSkills = [...startingSkills, ...bonusSkills];
                       const isUnlocked = isSkillUnlocked(skill.id, allSkills, skillTree);
                       const canToggle = canToggleSkill(skill.id, 'master');
                       
@@ -673,8 +717,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                 </div>
               );
             })()}
-              </div>
-
+              </div>              )}
               {/* Validation errors */}
               {!validation.valid && (
                 <div className="mt-4 p-3 bg-red-900/30 border border-red-600 rounded text-sm text-red-300">
