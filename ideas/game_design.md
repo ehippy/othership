@@ -37,6 +37,7 @@ Co-op browser survival horror.
 ## Stats & Attributes
 - Stats: Strength, Speed, Intellect, Combat, Social
 - Saves: Sanity, Fear, Body
+- health, wounds and stress
 
 ## Resource Management
 - Handful of inventory slots

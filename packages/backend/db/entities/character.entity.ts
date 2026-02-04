@@ -26,6 +26,15 @@ export const CharacterEntity = new Entity(
         type: "string",
         required: true,
       },
+      characterClass: {
+        type: "string",
+        required: false,
+      },
+      status: {
+        type: "string",
+        required: true,
+        default: "creating",
+      },
       stats: {
         type: "map",
         properties: {
@@ -56,15 +65,58 @@ export const CharacterEntity = new Entity(
         required: true,
         default: 10,
       },
-      stress: {
+      wounds: {
         type: "number",
         required: true,
         default: 0,
+      },
+      maxWounds: {
+        type: "number",
+        required: true,
+        default: 0,
+      },
+      stress: {
+        type: "number",
+        required: true,
+        default: 2,
+      },
+      minStress: {
+        type: "number",
+        required: true,
+        default: 2,
       },
       maxStress: {
         type: "number",
         required: true,
         default: 10,
+      },
+      skills: {
+        type: "list",
+        items: {
+          type: "string",
+        },
+        required: true,
+        default: [],
+      },
+      traumaResponse: {
+        type: "string",
+        required: false,
+      },
+      loadout: {
+        type: "list",
+        items: {
+          type: "string",
+        },
+        required: true,
+        default: [],
+      },
+      trinket: {
+        type: "string",
+        required: false,
+      },
+      patch: {
+        type: "string",
+        required: false,
       },
       inventory: {
         type: "list",

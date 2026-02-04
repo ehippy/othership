@@ -18,17 +18,30 @@ export interface CharacterSaves {
 export type Stats = CharacterStats;
 export type Saves = CharacterSaves;
 
+export type CharacterClass = 'marine' | 'android' | 'scientist' | 'teamster';
+export type CharacterStatus = 'creating' | 'ready' | 'rip';
+
 export interface Character {
   id: string;
   playerId: string;
   gameId: string;
   name: string;
+  characterClass?: CharacterClass;
+  status: CharacterStatus;
   stats: CharacterStats;
   saves: CharacterSaves;
   health: number;
   maxHealth: number;
+  wounds: number;
+  maxWounds: number;
   stress: number;
+  minStress: number;
   maxStress: number;
+  skills: string[];
+  traumaResponse?: string;
+  loadout: string[];
+  trinket?: string;
+  patch?: string;
   inventory: string[];
   isRIP: boolean;
   position?: Position;
@@ -78,7 +91,8 @@ export interface Player {
 
 export interface Game {
   id: string;
-  guildId: string;
+  guildId: string; // Internal ULID
+  discordGuildId: string; // Discord snowflake ID
   channelId: string;
   slug: string;
   scenarioId: string;

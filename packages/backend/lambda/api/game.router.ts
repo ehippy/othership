@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { router, publicProcedure, protectedProcedure } from "./trpc";
-import { gameService, playerService, guildService } from "../../db/services";
+import { gameService, playerService, guildService, characterService } from "../../db/services";
 import { guildMembershipService } from "../../db/services/guild-membership.service";
 import { postToChannel } from "../../lib/discord-client";
 import { formatGameName } from "@derelict/shared";
@@ -216,6 +216,25 @@ export const gameRouter = router({
         throw new Error("Unauthorized: Only opted-in players or guild admins can start the game");
       }
 
+      // Get current roster and create character skeletons (using Discord guild ID for memberships)
+      const roster = await gameService.getCurrentRoster(game.discordGuildId);
+      const createdCharacters = [];
+      
+      console.log('[beginCharacterCreation] Roster count:', roster.length);
+      
+      for (const member of roster) {
+        // Create skeleton character for each opted-in player
+        const character = await characterService.createCharacter({
+          playerId: member.playerId,
+          gameId: game.id,
+          name: member.playerUsername, // Default to Discord username, they'll change it
+        });
+        createdCharacters.push(character);
+        console.log('[beginCharacterCreation] Created character for:', member.playerUsername);
+      }
+
+      console.log('[beginCharacterCreation] Created', createdCharacters.length, 'characters');
+
       // Post character creation announcement to Discord
       const formattedName = formatGameName(game.slug);
       const message = `📝 **Character Creation**\n\n**${formattedName}** is now in character creation phase!\n\nPlayers: Name your character and finalize your builds.`;
@@ -226,7 +245,9 @@ export const gameRouter = router({
         console.error('Failed to post character creation announcement:', error);
       }
 
-      return await gameService.updateGameStatus(input.gameId, "character_creation");
+      const updatedGame = await gameService.updateGameStatus(input.gameId, "character_creation");
+      
+      return { game: updatedGame, characters: createdCharacters };
     }),
 
   // Start game (character_creation → active)

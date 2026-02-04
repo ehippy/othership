@@ -5,6 +5,7 @@ import { useOptionalAuth } from "@/lib/hooks/useAuth";
 import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
 import { formatGameName, getAvatarUrl } from "@/lib/utils";
+import { CharacterCreationWizard } from "@/components/game/CharacterCreationWizard";
 
 export default function GamePage() {
   const params = useParams<{ guildSlug: string; gameSlug: string }>();
@@ -25,6 +26,18 @@ export default function GamePage() {
       refetchInterval: game?.status === "staging" ? 10000 : false, // Poll every 10s during staging
     }
   );
+
+  // Fetch characters for the game (for character_creation and active phases)
+  const { data: characters, refetch: refetchCharacters } = trpc.character.listByGame.useQuery(
+    { gameId: game?.id || "" },
+    { 
+      enabled: !!game?.id && (game?.status === "character_creation" || game?.status === "active"),
+      refetchInterval: game?.status === "character_creation" ? 5000 : false, // Poll every 5s during character creation
+    }
+  );
+
+  // Find the current user's character
+  const myCharacter = characters?.find((c: any) => c.playerId === user?.discordUserId);
 
   // Fetch guild info for display
   const userGuild = guilds?.find((g) => g.id === game?.discordGuildId);
@@ -88,45 +101,29 @@ export default function GamePage() {
   
   if (gameLoading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white pt-16">
-        <div className="text-center">
-          <p className="text-gray-400">Loading game...</p>
+      <Layout topBarMode="hamburger">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-gray-400">Loading game...</p>
+          </div>
         </div>
-        <TopBar
-          avatar={user?.avatar || null}
-          discordUserId={user?.discordUserId || null}
-          username={user?.username || null}
-          onLogout={logout}
-          onSelectGuild={selectGuild}
-          selectedGuildName={selectedGuild?.name}
-          selectedGuildId={selectedGuild?.id || null}
-          selectedGuildIcon={selectedGuild?.icon || null}
-        />
-      </main>
+      </Layout>
     );
   }
 
   // Show not found
   if (!game) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white pt-16">
-        <div className="text-center">
-          <p className="text-gray-400">Game not found</p>
-          <a href={`/${params.guildSlug}`} className="text-indigo-400 hover:text-indigo-300 mt-4 inline-block">
-            ← Back to guild
-          </a>
+      <Layout topBarMode="hamburger">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-gray-400">Game not found</p>
+            <a href={`/${params.guildSlug}`} className="text-indigo-400 hover:text-indigo-300 mt-4 inline-block">
+              ← Back to guild
+            </a>
+          </div>
         </div>
-        <TopBar
-          avatar={user?.avatar || null}
-          discordUserId={user?.discordUserId || null}
-          username={user?.username || null}
-          onLogout={logout}
-          onSelectGuild={selectGuild}
-          selectedGuildName={selectedGuild?.name}
-          selectedGuildId={selectedGuild?.id || null}
-          selectedGuildIcon={selectedGuild?.icon || null}
-        />
-      </main>
+      </Layout>
     );
   }
 
@@ -171,6 +168,14 @@ export default function GamePage() {
 
   return (
     <Layout topBarMode="hamburger" className="!p-0">
+      {/* Character Creation Modal */}
+      {game.status === "character_creation" && myCharacter && myCharacter.status === "creating" && (
+        <CharacterCreationWizard 
+          character={myCharacter} 
+          onComplete={refetchCharacters} 
+        />
+      )}
+
       {/* Full-screen game HUD */}
       <div className="relative w-full h-screen overflow-hidden">
         
@@ -217,7 +222,8 @@ export default function GamePage() {
         {/* Bottom character bar */}
         <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/80 backdrop-blur-md border-t border-gray-700">
           <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
-            {roster && roster.length > 0 ? (
+            {/* Show roster during staging */}
+            {game.status === "staging" && roster && roster.length > 0 ? (
               roster.map((member: any) => (
                 <div
                   key={member.playerId}
@@ -231,6 +237,23 @@ export default function GamePage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{member.playerUsername}</p>
                     <p className="text-xs text-gray-400">Ready</p>
+                  </div>
+                </div>
+              ))
+            ) : (game.status === "character_creation" || game.status === "active") && characters && characters.length > 0 ? (
+              characters.map((character: any) => (
+                <div
+                  key={character.id}
+                  className="flex-shrink-0 flex items-center gap-2 bg-gray-800 hover:bg-gray-700 transition-colors border border-gray-600 rounded-lg px-3 py-2 min-w-[140px]"
+                >
+                  <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+                    {character.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{character.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {character.status === "creating" ? "Creating..." : character.characterClass || "Ready"}
+                    </p>
                   </div>
                 </div>
               ))

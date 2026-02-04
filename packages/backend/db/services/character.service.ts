@@ -4,14 +4,14 @@ import type { Character, Stats, Saves, Position } from "@derelict/shared";
 
 export const characterService = {
   /**
-   * Create a new character
+   * Create a new character (skeleton for character creation phase)
    */
   async createCharacter(params: {
     playerId: string;
     gameId: string;
     name: string;
-    stats: Stats;
-    saves: Saves;
+    stats?: Stats;
+    saves?: Saves;
     position?: Position;
   }): Promise<Character> {
     const id = ulid();
@@ -21,12 +21,18 @@ export const characterService = {
       playerId: params.playerId,
       gameId: params.gameId,
       name: params.name,
-      stats: params.stats,
-      saves: params.saves,
+      status: "creating",
+      stats: params.stats || { strength: 0, speed: 0, intellect: 0, combat: 0, social: 0 },
+      saves: params.saves || { sanity: 0, fear: 0, body: 0 },
       health: 10,
       maxHealth: 10,
-      stress: 0,
+      wounds: 0,
+      maxWounds: 0,
+      stress: 2,
+      minStress: 2,
       maxStress: 10,
+      skills: [],
+      loadout: [],
       inventory: [],
       isRIP: false,
       position: params.position,
