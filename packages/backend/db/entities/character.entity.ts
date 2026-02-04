@@ -34,6 +34,10 @@ export const CharacterEntity = new Entity(
         type: "string",
         required: true,
       },
+      avatar: {
+        type: "string",
+        required: false,
+      },
       characterClass: {
         type: "string",
         required: false,

@@ -87,6 +87,7 @@ export const characterRouter = router({
       z.object({
         characterId: z.string(),
         name: z.string().optional(),
+        avatar: z.string().optional(),
         characterClass: z.enum(['marine', 'android', 'scientist', 'teamster']).optional(),
         chosenStatModifier: z.enum(['strength', 'speed', 'intellect', 'combat', 'social']).optional(),
         status: z.enum(['creating', 'ready', 'rip']).optional(),

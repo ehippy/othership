@@ -250,8 +250,18 @@ export default function GamePage() {
                   <div className="flex items-start gap-2 mb-2">
                     <div className="relative flex-shrink-0">
                       {/* Character avatar - rounded rect */}
-                      <div className="w-10 h-10 rounded bg-indigo-600 flex items-center justify-center text-white font-bold">
-                        {character.name.charAt(0).toUpperCase()}
+                      <div className="w-10 h-10 rounded bg-gray-700 flex items-center justify-center overflow-hidden">
+                        {character.avatar ? (
+                          <img 
+                            src={character.avatar} 
+                            alt={character.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-bold">
+                            {character.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
                       </div>
                       {/* Player avatar - small circle overlay */}
                       <img

@@ -28,6 +28,7 @@ export interface Character {
   playerAvatar?: string;
   gameId: string;
   name: string;
+  avatar?: string; // Character portrait
   characterClass?: CharacterClass;
   chosenStatModifier?: 'strength' | 'speed' | 'intellect' | 'combat' | 'social'; // For Android/Scientist
   status: CharacterStatus;

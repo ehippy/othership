@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { trpc } from "@/lib/api/trpc";
 import type { Character } from "@derelict/shared";
 import { CLASS_MODIFIERS, getStatModifier, getSaveModifier } from "@derelict/shared";
+import { AVATAR_LIST, getRandomAvatar } from "@/lib/avatars";
 
 interface CharacterCreationWizardProps {
   character: Character;
@@ -14,6 +15,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
     name: character.name,
     characterClass: character.characterClass || undefined,
     chosenStatModifier: character.chosenStatModifier || undefined,
+    avatar: character.avatar || getRandomAvatar(),
   });
 
   // Check if all stats are rolled
@@ -94,6 +96,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
   const handleCompleteCharacter = () => {
     updateCharacterMutation.mutate({
       characterId: character.id,
+      avatar: formData.avatar,
       name: formData.name,
       status: 'ready',
     });
@@ -373,6 +376,38 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                 placeholder="Enter character name"
                 autoFocus
               />
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Character Avatar
+              </label>
+              <div className="flex items-center gap-4 mb-3">
+                <img 
+                  src={formData.avatar} 
+                  alt="Selected avatar"
+                  className="w-20 h-20 rounded-lg border-2 border-indigo-500"
+                />
+                <button
+                  onClick={() => setFormData({ ...formData, avatar: getRandomAvatar() })}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded transition-colors"
+                >
+                  Random Avatar
+                </button>
+              </div>
+              <div className="grid grid-cols-10 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
+                {AVATAR_LIST.map(avatar => (
+                  <img 
+                    key={avatar}
+                    src={avatar}
+                    alt="Avatar option"
+                    className={`w-full aspect-square cursor-pointer rounded transition-all hover:scale-110 ${
+                      formData.avatar === avatar ? 'ring-2 ring-indigo-500 scale-105' : 'opacity-60 hover:opacity-100'
+                    }`}
+                    onClick={() => setFormData({ ...formData, avatar })}
+                  />
+                ))}
+              </div>
             </div>
 
             <p className="text-gray-400 mb-4">Review your character:</p>
