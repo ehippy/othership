@@ -3,6 +3,7 @@ import { trpc } from "@/lib/api/trpc";
 import type { Character } from "@derelict/shared";
 import { CLASS_MODIFIERS, getStatModifier, getSaveModifier } from "@derelict/shared";
 import { AVATAR_LIST, getRandomAvatar } from "@/lib/avatars";
+import { StatsDisplay } from "./StatsDisplay";
 
 interface CharacterCreationWizardProps {
   character: Character;
@@ -17,6 +18,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
     chosenStatModifier: character.chosenStatModifier || undefined,
     avatar: character.avatar || getRandomAvatar(),
   });
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   // Check if all stats are rolled
   const allStatsRolled = character.stats.strength > 0 && 
@@ -138,65 +140,19 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
               {!(allStatsRolled && allSavesRolled) && (
                 <button
                   onClick={handleRollAll}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors text-sm font-semibold"
+                  disabled={rollAllStatsMutation.isPending}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 text-white rounded transition-colors text-sm font-semibold"
                 >
-                  Roll All
+                  {rollAllStatsMutation.isPending ? 'Rolling...' : 'Roll All'}
                 </button>
               )}
             </div>
             <p className="text-gray-400 mb-6">Roll for each stat (2d10 + 25) and save (2d10 + 10)</p>
             
-            {/* Stats */}
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">Stats</h4>
-              <div className="grid grid-cols-5 gap-3">
-                {(['strength', 'speed', 'intellect', 'combat', 'social'] as const).map((stat) => {
-                  const value = character.stats[stat];
-                  const isRolled = value > 0;
-                  return (
-                    <div key={stat} className="flex flex-col items-center gap-2 p-3 bg-gray-900 rounded border border-gray-700">
-                      <span className="capitalize text-gray-300 text-sm font-medium">{stat}</span>
-                      <span className={`text-3xl font-bold ${isRolled ? 'text-indigo-400' : 'text-gray-600'}`}>
-                        {value || '—'}
-                      </span>
-                      <button
-                        onClick={() => rollStatMutation.mutate({ characterId: character.id, stat })}
-                        disabled={isRolled || rollStatMutation.isPending}
-                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed disabled:text-gray-600 text-white rounded transition-colors text-xs w-full"
-                      >
-                        {rollStatMutation.isPending ? '...' : isRolled ? 'Rolled' : 'Roll'}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Saves */}
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">Saves</h4>
-              <div className="grid grid-cols-3 gap-3">
-                {(['sanity', 'fear', 'body'] as const).map((save) => {
-                  const value = character.saves[save];
-                  const isRolled = value > 0;
-                  return (
-                    <div key={save} className="flex flex-col items-center gap-2 p-3 bg-gray-900 rounded border border-gray-700">
-                      <span className="capitalize text-gray-300 text-sm font-medium">{save}</span>
-                      <span className={`text-3xl font-bold ${isRolled ? 'text-indigo-400' : 'text-gray-600'}`}>
-                        {value || '—'}
-                      </span>
-                      <button
-                        onClick={() => rollSaveMutation.mutate({ characterId: character.id, save })}
-                        disabled={isRolled || rollSaveMutation.isPending}
-                        className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed disabled:text-gray-600 text-white rounded transition-colors text-xs w-full"
-                      >
-                        {rollSaveMutation.isPending ? '...' : isRolled ? 'Rolled' : 'Roll'}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <StatsDisplay
+              stats={character.stats}
+              saves={character.saves}
+            />
 
             <div className="flex justify-end gap-3">
               <button
@@ -216,10 +172,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
             <h3 className="text-xl font-semibold mb-4">Choose Your Class</h3>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Choose Your Class
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 {['marine', 'android', 'scientist', 'teamster'].map((cls) => {
                   const modifiers = CLASS_MODIFIERS[cls];
                   const allMods = [
@@ -249,9 +202,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                         {cls === 'teamster' && 'Blue-collar workers'}
                       </div>
                       <div className="text-[10px] text-indigo-300 leading-relaxed">
-                        {allMods.join(', ')}
-                        {modifiers.requiresStatChoice && `, ${modifiers.requiresStatChoice === 'penalty' ? '-10' : '+5'} to 1 stat (choice)`}
-                        {modifiers.maxWounds > 0 && `, +${modifiers.maxWounds} Max Wounds`}
+                        {modifiers.maxWounds > 0 && `${modifiers.maxWounds} Max Wounds`}
                       </div>
                     </button>
                   );
@@ -290,51 +241,25 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
 
             {/* Preview Stats & Saves with class modifiers */}
             {formData.characterClass && (
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-300 mb-3">Preview: Your Final Stats</h4>
-                <div className="grid grid-cols-5 gap-3 mb-4">
-                  {(['strength', 'speed', 'intellect', 'combat', 'social'] as const).map((stat) => {
-                    const baseValue = character.stats[stat];
-                    const modifier = getStatModifier(formData.characterClass!, stat, formData.chosenStatModifier);
-                    const finalValue = baseValue + modifier;
-                    return (
-                      <div key={stat} className="flex flex-col items-center gap-1 p-3 bg-gray-900 rounded border border-gray-700">
-                        <span className="capitalize text-gray-300 text-xs font-medium">{stat}</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold text-white">{finalValue}</span>
-                          {modifier !== 0 && (
-                            <span className={`text-xs ${modifier > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              ({modifier > 0 ? '+' : ''}{modifier})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <h4 className="text-sm font-semibold text-gray-300 mb-3">Preview: Your Final Saves</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  {(['sanity', 'fear', 'body'] as const).map((save) => {
-                    const baseValue = character.saves[save];
-                    const modifier = getSaveModifier(formData.characterClass!, save);
-                    const finalValue = baseValue + modifier;
-                    return (
-                      <div key={save} className="flex flex-col items-center gap-1 p-3 bg-gray-900 rounded border border-gray-700">
-                        <span className="capitalize text-gray-300 text-xs font-medium">{save}</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-bold text-indigo-400">{finalValue}</span>
-                          {modifier !== 0 && (
-                            <span className={`text-xs ${modifier > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                              ({modifier > 0 ? '+' : ''}{modifier})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              <StatsDisplay
+                stats={character.stats}
+                saves={character.saves}
+                showModifiers
+                modifiers={{
+                  stats: {
+                    strength: getStatModifier(formData.characterClass, 'strength', formData.chosenStatModifier),
+                    speed: getStatModifier(formData.characterClass, 'speed', formData.chosenStatModifier),
+                    intellect: getStatModifier(formData.characterClass, 'intellect', formData.chosenStatModifier),
+                    combat: getStatModifier(formData.characterClass, 'combat', formData.chosenStatModifier),
+                    social: getStatModifier(formData.characterClass, 'social', formData.chosenStatModifier),
+                  },
+                  saves: {
+                    sanity: getSaveModifier(formData.characterClass, 'sanity'),
+                    fear: getSaveModifier(formData.characterClass, 'fear'),
+                    body: getSaveModifier(formData.characterClass, 'body'),
+                  },
+                }}
+              />
             )}
 
             <div className="flex justify-between">
@@ -362,87 +287,99 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
         {/* Step 3: Name & Review */}
         {step === 3 && (
           <div>
-            <h3 className="text-xl font-semibold mb-4">Name Your Character</h3>
+            <h3 className="text-xl font-semibold mb-4">Identity</h3>
             
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Character Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white focus:outline-none focus:border-indigo-500"
-                placeholder="Enter character name"
-                autoFocus
-              />
-            </div>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Character Avatar
-              </label>
-              <div className="flex items-center gap-4 mb-3">
+            {/* Name and Avatar Preview Row */}
+            <div className="flex gap-4 mb-6">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Character Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white focus:outline-none focus:border-indigo-500"
+                  placeholder="Enter character name"
+                  autoFocus
+                />
+              </div>
+              
+              <div className="flex-shrink-0 group relative">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Avatar
+                </label>
                 <img 
                   src={formData.avatar} 
                   alt="Selected avatar"
-                  className="w-20 h-20 rounded-lg border-2 border-indigo-500"
+                  className="w-32 h-32 rounded-lg border-2 border-indigo-500 cursor-pointer"
                 />
-                <button
-                  onClick={() => setFormData({ ...formData, avatar: getRandomAvatar() })}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded transition-colors"
+                {/* Hover buttons overlay */}
+                <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 p-2">
+                  <button
+                    onClick={() => setFormData({ ...formData, avatar: getRandomAvatar() })}
+                    className="flex-1 px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded transition-colors"
+                  >
+                    Random
+                  </button>
+                  <button
+                    onClick={() => setIsAvatarPickerOpen(true)}
+                    className="flex-1 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded transition-colors"
+                  >
+                    Choose
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Avatar Picker Modal */}
+            {isAvatarPickerOpen && (
+              <div 
+                className="fixed inset-0 bg-black/70 z-[200] flex items-center justify-center p-4"
+                onClick={() => setIsAvatarPickerOpen(false)}
+              >
+                <div 
+                  className="bg-gray-800 rounded-lg p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto"
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Random Avatar
-                </button>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-semibold text-white">Choose Your Avatar</h4>
+                    <button
+                      onClick={() => setIsAvatarPickerOpen(false)}
+                      className="text-gray-400 hover:text-white text-2xl leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-8 md:grid-cols-10 gap-2">
+                    {AVATAR_LIST.map(avatar => (
+                      <img 
+                        key={avatar}
+                        src={avatar}
+                        alt="Avatar option"
+                        className={`w-full aspect-square cursor-pointer rounded transition-all hover:scale-110 ${
+                          formData.avatar === avatar ? 'ring-2 ring-indigo-500 scale-105' : 'opacity-60 hover:opacity-100'
+                        }`}
+                        onClick={() => {
+                          setFormData({ ...formData, avatar });
+                          setIsAvatarPickerOpen(false);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-10 gap-2 max-h-60 overflow-y-auto p-2 bg-gray-900 rounded border border-gray-700">
-                {AVATAR_LIST.map(avatar => (
-                  <img 
-                    key={avatar}
-                    src={avatar}
-                    alt="Avatar option"
-                    className={`w-full aspect-square cursor-pointer rounded transition-all hover:scale-110 ${
-                      formData.avatar === avatar ? 'ring-2 ring-indigo-500 scale-105' : 'opacity-60 hover:opacity-100'
-                    }`}
-                    onClick={() => setFormData({ ...formData, avatar })}
-                  />
-                ))}
-              </div>
-            </div>
+            )}
 
-            <p className="text-gray-400 mb-4">Review your character:</p>
+            <div className="mb-2">
+              <p className="text-sm font-semibold text-gray-300 mb-1">Final Character</p>
+              <p className="text-sm text-gray-400 capitalize">{character.characterClass}</p>
+            </div>
             
-            <div className="bg-gray-900 rounded-lg p-6 mb-6">
-              <div className="mb-4">
-                <p className="text-sm text-gray-400 capitalize">{character.characterClass}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h5 className="text-sm font-semibold text-gray-300 mb-2">Stats</h5>
-                  <div className="space-y-1 text-sm">
-                    {(['strength', 'speed', 'intellect', 'combat', 'social'] as const).map((stat) => (
-                      <div key={stat} className="flex justify-between">
-                        <span className="capitalize text-gray-400">{stat}</span>
-                        <span className="text-white font-semibold">{character.stats[stat]}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="text-sm font-semibold text-gray-300 mb-2">Saves</h5>
-                  <div className="space-y-1 text-sm">
-                    {(['sanity', 'fear', 'body'] as const).map((save) => (
-                      <div key={save} className="flex justify-between">
-                        <span className="capitalize text-gray-400">{save}</span>
-                        <span className="text-indigo-400 font-semibold">{character.saves[save]}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatsDisplay
+              stats={character.stats}
+              saves={character.saves}
+            />
 
             <div className="flex justify-between">
               <button

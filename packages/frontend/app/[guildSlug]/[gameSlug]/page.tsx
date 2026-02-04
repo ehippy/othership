@@ -6,6 +6,7 @@ import { useGuildSelection } from "@/lib/hooks/useGuildSelection";
 import { trpc } from "@/lib/api/trpc";
 import { formatGameName, getAvatarUrl } from "@/lib/utils";
 import { CharacterCreationWizard } from "@/components/game/CharacterCreationWizard";
+import { PartyBar } from "@/components/game/PartyBar";
 
 export default function GamePage() {
   const params = useParams<{ guildSlug: string; gameSlug: string }>();
@@ -177,7 +178,7 @@ export default function GamePage() {
       )}
 
       {/* Full-screen game HUD */}
-      <div className="relative w-full h-screen overflow-hidden">
+      <div className="relative w-full h-screen overflow-x-hidden">
         
         {/* Game title overlay - top right */}
         <div className="absolute top-4 right-4 z-10 bg-black/70 backdrop-blur-sm border border-gray-700 rounded-lg px-4 py-2">
@@ -219,145 +220,16 @@ export default function GamePage() {
           </div>
         </div>
 
-        {/* Bottom character bar */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/80 backdrop-blur-md border-t border-gray-700">
-          <div className="flex items-center gap-2 px-4 py-3 overflow-x-auto">
-            {/* Show roster during staging */}
-            {game.status === "staging" && roster && roster.length > 0 ? (
-              roster.map((member: any) => (
-                <div
-                  key={member.playerId}
-                  className="flex-shrink-0 flex items-center gap-2 bg-gray-800 hover:bg-gray-700 transition-colors border border-gray-600 rounded-lg px-3 py-2 min-w-[140px]"
-                >
-                  <img
-                    src={getAvatarUrl(member.playerId, member.playerAvatar)}
-                    alt={member.playerUsername}
-                    className="w-8 h-8 rounded-full"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">{member.playerUsername}</p>
-                    <p className="text-xs text-gray-400">Ready</p>
-                  </div>
-                </div>
-              ))
-            ) : (game.status === "character_creation" || game.status === "active") && characters && characters.length > 0 ? (
-              characters.map((character: any) => (
-                <div
-                  key={character.id}
-                  className="flex-shrink-0 bg-gray-800 hover:bg-gray-700 transition-colors border border-gray-600 rounded-lg p-3 min-w-[280px]"
-                >
-                  {/* Header with avatar, name, and vitals */}
-                  <div className="flex items-start gap-2 mb-2">
-                    <div className="relative flex-shrink-0">
-                      {/* Character avatar - rounded rect */}
-                      <div className="w-10 h-10 rounded bg-gray-700 flex items-center justify-center overflow-hidden">
-                        {character.avatar ? (
-                          <img 
-                            src={character.avatar} 
-                            alt={character.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-white font-bold">
-                            {character.name.charAt(0).toUpperCase()}
-                          </span>
-                        )}
-                      </div>
-                      {/* Player avatar - small circle overlay */}
-                      <img
-                        src={getAvatarUrl(character.playerId, character.playerAvatar)}
-                        alt="Player"
-                        className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border border-gray-800"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">{character.name}</p>
-                      <p className="text-xs text-gray-400">
-                        {character.status === "creating" ? "Creating..." : character.characterClass || "Ready"}
-                      </p>
-                    </div>
-                    {/* Vitals */}
-                    {character.status !== "creating" && (
-                      <div className="flex gap-2 text-[10px]">
-                        <div className="flex flex-col gap-0.5">
-                          <p className="text-gray-500 uppercase text-center">Health</p>
-                          <div className="w-12 h-2 bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full transition-all ${
-                                (character.health / character.maxHealth) > 0.5 ? 'bg-green-500' :
-                                (character.health / character.maxHealth) > 0.25 ? 'bg-yellow-500' :
-                                'bg-red-500'
-                              }`}
-                              style={{ width: `${(character.health / character.maxHealth) * 100}%` }}
-                            />
-                          </div>
-                          <p className="font-semibold text-gray-300 text-center text-[9px]">{character.health}/{character.maxHealth}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-500 uppercase">Wounds</p>
-                          <p className="font-semibold text-red-400">{character.wounds || 0}/{character.maxWounds || 2}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-500 uppercase">Stress</p>
-                          <p className="font-semibold text-yellow-400">{character.stress || 2}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stats and Saves */}
-                  {character.status !== "creating" && (
-                    <div className="space-y-2">
-                      {/* Stats */}
-                      <div className="grid grid-cols-5 gap-1 text-center">
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Strength</p>
-                          <p className="text-xs font-semibold text-white">{character.stats.strength || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Speed</p>
-                          <p className="text-xs font-semibold text-white">{character.stats.speed || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Intellect</p>
-                          <p className="text-xs font-semibold text-white">{character.stats.intellect || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Combat</p>
-                          <p className="text-xs font-semibold text-white">{character.stats.combat || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Social</p>
-                          <p className="text-xs font-semibold text-white">{character.stats.social || 0}</p>
-                        </div>
-                      </div>
-
-                      {/* Saves */}
-                      <div className="grid grid-cols-3 gap-1 text-center border-t border-gray-700 pt-2">
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Sanity</p>
-                          <p className="text-xs font-semibold text-indigo-400">{character.saves.sanity || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Fear</p>
-                          <p className="text-xs font-semibold text-indigo-400">{character.saves.fear || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 uppercase">Body</p>
-                          <p className="text-xs font-semibold text-indigo-400">{character.saves.body || 0}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <div className="w-full text-center py-2">
-                <p className="text-sm text-gray-400">No players in roster yet</p>
-              </div>
-            )}
-          </div>
-        </div>
+        {/* PartyBar */}
+        <PartyBar 
+          status={game.status} 
+          roster={roster} 
+          characters={characters}
+          isAdmin={user?.isAdmin}
+          onCharacterDeleted={() => {
+            refetchCharacters();
+          }}
+        />
       </div>
     </Layout>
   );

@@ -190,4 +190,11 @@ export const characterService = {
 
     return result.data as Character;
   },
+
+  /**
+   * Delete character completely (admin only)
+   */
+  async deleteCharacter(characterId: string): Promise<void> {
+    await CharacterEntity.delete({ id: characterId }).go();
+  },
 };

@@ -484,4 +484,33 @@ export const characterRouter = router({
     .mutation(async ({ input }) => {
       return await characterService.killCharacter(input.characterId);
     }),
+
+  // Delete character (admin only - for restarting character creation)
+  delete: publicProcedure
+    .input(z.object({ characterId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      // Check admin
+      if (!ctx.user?.isAdmin) {
+        throw new Error("Only admins can delete characters");
+      }
+
+      const character = await characterService.getCharacter(input.characterId);
+      if (!character) {
+        throw new Error("Character not found");
+      }
+
+      // Delete the character
+      await characterService.deleteCharacter(input.characterId);
+
+      // Create a new skeleton character for the same player
+      const newCharacter = await characterService.createCharacter({
+        playerId: character.playerId,
+        playerUsername: character.playerUsername,
+        playerAvatar: character.playerAvatar,
+        gameId: character.gameId,
+        name: "",
+      });
+
+      return newCharacter;
+    }),
 });
