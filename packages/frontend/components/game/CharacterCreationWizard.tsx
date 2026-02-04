@@ -12,11 +12,24 @@ interface CharacterCreationWizardProps {
 
 export function CharacterCreationWizard({ character, onComplete }: CharacterCreationWizardProps) {
   const [step, setStep] = useState(1);
+  
+  // Helper to get name from avatar path
+  const getNameFromAvatar = (avatarPath: string) => {
+    const filename = avatarPath.split('/').pop() || '';
+    const nameWithoutExt = filename.replace(/\.(png|jpg|jpeg|gif|webp)$/i, '');
+    // Convert to title case: "alien-warrior" -> "Alien Warrior"
+    return nameWithoutExt
+      .split(/[-_]/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+  
+  const initialAvatar = character.avatar || getRandomAvatar();
   const [formData, setFormData] = useState({
-    name: character.name,
+    name: character.name || getNameFromAvatar(initialAvatar),
     characterClass: character.characterClass || undefined,
     chosenStatModifier: character.chosenStatModifier || undefined,
-    avatar: character.avatar || getRandomAvatar(),
+    avatar: initialAvatar,
   });
   const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
@@ -44,9 +57,9 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
 
   // Apply class modifiers mutation (server-side)
   const applyClassModifiersMutation = trpc.character.applyClassModifiers.useMutation({
-    onSuccess: () => {
-      onComplete(); // Refresh character data
-      setStep(3); // Move to next step
+    onSuccess: async () => {
+      await onComplete(); // Refresh character data
+      setStep(3); // Move to next step after data is refreshed
     },
     onError: (error) => {
       alert(`Failed to apply class modifiers: ${error.message}`);
@@ -147,7 +160,6 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                 </button>
               )}
             </div>
-            <p className="text-gray-400 mb-6">Roll for each stat (2d10 + 25) and save (2d10 + 10)</p>
             
             <StatsDisplay
               stats={character.stats}
@@ -240,27 +252,46 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
             )}
 
             {/* Preview Stats & Saves with class modifiers */}
-            {formData.characterClass && (
-              <StatsDisplay
-                stats={character.stats}
-                saves={character.saves}
-                showModifiers
-                modifiers={{
-                  stats: {
-                    strength: getStatModifier(formData.characterClass, 'strength', formData.chosenStatModifier),
-                    speed: getStatModifier(formData.characterClass, 'speed', formData.chosenStatModifier),
-                    intellect: getStatModifier(formData.characterClass, 'intellect', formData.chosenStatModifier),
-                    combat: getStatModifier(formData.characterClass, 'combat', formData.chosenStatModifier),
-                    social: getStatModifier(formData.characterClass, 'social', formData.chosenStatModifier),
-                  },
-                  saves: {
-                    sanity: getSaveModifier(formData.characterClass, 'sanity'),
-                    fear: getSaveModifier(formData.characterClass, 'fear'),
-                    body: getSaveModifier(formData.characterClass, 'body'),
-                  },
-                }}
-              />
-            )}
+            {(() => {
+              // Calculate base stats by removing existing class modifiers if any
+              let displayStats = { ...character.stats };
+              let displaySaves = { ...character.saves };
+              
+              if (character.characterClass) {
+                // Remove old modifiers to show preview correctly
+                (['strength', 'speed', 'intellect', 'combat', 'social'] as const).forEach(stat => {
+                  const oldModifier = getStatModifier(character.characterClass!, stat, character.chosenStatModifier);
+                  displayStats[stat] = character.stats[stat] - oldModifier;
+                });
+                
+                (['sanity', 'fear', 'body'] as const).forEach(save => {
+                  const oldModifier = getSaveModifier(character.characterClass!, save);
+                  displaySaves[save] = character.saves[save] - oldModifier;
+                });
+              }
+              
+              return (
+                <StatsDisplay
+                  stats={displayStats}
+                  saves={displaySaves}
+                  showModifiers={!!formData.characterClass}
+                  modifiers={formData.characterClass ? {
+                    stats: {
+                      strength: getStatModifier(formData.characterClass, 'strength', formData.chosenStatModifier),
+                      speed: getStatModifier(formData.characterClass, 'speed', formData.chosenStatModifier),
+                      intellect: getStatModifier(formData.characterClass, 'intellect', formData.chosenStatModifier),
+                      combat: getStatModifier(formData.characterClass, 'combat', formData.chosenStatModifier),
+                      social: getStatModifier(formData.characterClass, 'social', formData.chosenStatModifier),
+                    },
+                    saves: {
+                      sanity: getSaveModifier(formData.characterClass, 'sanity'),
+                      fear: getSaveModifier(formData.characterClass, 'fear'),
+                      body: getSaveModifier(formData.characterClass, 'body'),
+                    },
+                  } : undefined}
+                />
+              );
+            })()}
 
             <div className="flex justify-between">
               <button
@@ -297,7 +328,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded text-white text-4xl font-bold focus:outline-none focus:border-indigo-500"
                   placeholder="Enter character name"
                   autoFocus
                 />
