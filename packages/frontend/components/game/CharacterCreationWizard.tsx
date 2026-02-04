@@ -71,6 +71,17 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
     },
   });
 
+  // Roll all stats and saves at once
+  const rollAllStatsMutation = trpc.character.rollAllStats.useMutation({
+    onSuccess: (data) => {
+      console.log('Rolled all stats and saves:', data.results);
+      onComplete(); // Refresh character data
+    },
+    onError: (error) => {
+      alert(`Failed to roll: ${error.message}`);
+    },
+  });
+
   const handleSaveClassAndName = () => {
     // Use server-side mutation to apply class modifiers
     applyClassModifiersMutation.mutate({
@@ -89,21 +100,7 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
   };
 
   const handleRollAll = () => {
-    // Roll all stats
-    (['strength', 'speed', 'intellect', 'combat', 'social'] as const).forEach((stat) => {
-      if (character.stats[stat] === 0) {
-        rollStatMutation.mutate({ characterId: character.id, stat });
-      }
-    });
-    
-    // Roll all saves (slight delay to avoid race conditions)
-    setTimeout(() => {
-      (['sanity', 'fear', 'body'] as const).forEach((save) => {
-        if (character.saves[save] === 0) {
-          rollSaveMutation.mutate({ characterId: character.id, save });
-        }
-      });
-    }, 100);
+    rollAllStatsMutation.mutate({ characterId: character.id });
   };
 
   return (

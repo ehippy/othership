@@ -244,6 +244,56 @@ export const characterRouter = router({
       };
     }),
 
+  // Roll all unrolled stats and saves at once
+  rollAllStats: publicProcedure
+    .input(z.object({ characterId: z.string() }))
+    .mutation(async ({ input }) => {
+      const character = await characterService.getCharacter(input.characterId);
+      if (!character) {
+        throw new Error("Character not found");
+      }
+
+      const updatedStats = { ...character.stats };
+      const updatedSaves = { ...character.saves };
+      const results = {
+        stats: {} as Record<string, { rolls: number[]; value: number }>,
+        saves: {} as Record<string, { rolls: number[]; value: number }>,
+      };
+
+      // Roll all unrolled stats
+      (['strength', 'speed', 'intellect', 'combat', 'social'] as const).forEach((stat) => {
+        if (character.stats[stat] === 0) {
+          const die1 = rollDie(10);
+          const die2 = rollDie(10);
+          const value = die1 + die2 + 25;
+          updatedStats[stat] = value;
+          results.stats[stat] = { rolls: [die1, die2], value };
+        }
+      });
+
+      // Roll all unrolled saves
+      (['sanity', 'fear', 'body'] as const).forEach((save) => {
+        if (character.saves[save] === 0) {
+          const die1 = rollDie(10);
+          const die2 = rollDie(10);
+          const value = die1 + die2 + 10;
+          updatedSaves[save] = value;
+          results.saves[save] = { rolls: [die1, die2], value };
+        }
+      });
+
+      // Update character with all new values in one operation
+      const updatedCharacter = await characterService.updateCharacter(input.characterId, {
+        stats: updatedStats,
+        saves: updatedSaves,
+      });
+
+      return {
+        character: updatedCharacter,
+        results,
+      };
+    }),
+
   // Move character
   move: publicProcedure
     .input(
