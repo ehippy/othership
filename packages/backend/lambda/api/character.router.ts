@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { router, publicProcedure } from "./trpc";
-import { characterService, playerService } from "../../db/services";
+import { characterService, playerService, gameService } from "../../db/services";
 import { rollDie, rollCheck, getStatModifier, getSaveModifier } from "@derelict/shared";
+import { postEmbed } from "../../lib/discord-client"; 
 
 export const characterRouter = router({
   // Create a new character
@@ -111,7 +112,83 @@ export const characterRouter = router({
     )
     .mutation(async ({ input }) => {
       const { characterId, ...updates } = input;
-      return await characterService.updateCharacter(characterId, updates);
+      
+      // Fetch character first if we need to post to Discord
+      const shouldPostToDiscord = updates.status === 'ready';
+      const existingCharacter = shouldPostToDiscord 
+        ? await characterService.getCharacter(characterId)
+        : null;
+      
+      const updatedCharacter = await characterService.updateCharacter(characterId, updates);
+      
+      // If character status changed to 'ready', post to Discord
+      if (shouldPostToDiscord && existingCharacter) {
+        console.log('[CHARACTER] Character ready, posting to Discord...', {
+          characterId: existingCharacter.id,
+          gameId: existingCharacter.gameId,
+          playerId: existingCharacter.playerId,
+        });
+        
+        try {
+          const game = await gameService.getGame(existingCharacter.gameId);
+          
+          console.log('[CHARACTER] Fetched game', {
+            hasGame: !!game,
+            channelId: game?.channelId,
+          });
+          
+          if (game?.channelId) {
+            const className = existingCharacter.characterClass 
+              ? existingCharacter.characterClass.charAt(0).toUpperCase() + existingCharacter.characterClass.slice(1)
+              : 'Character';
+            
+            // Class-specific emojis
+            const classEmojis: Record<string, string> = {
+              marine: '🪖',
+              android: '🤖',
+              scientist: '🔬',
+              teamster: '🚚',
+            };
+            const classEmoji = classEmojis[existingCharacter.characterClass || ''] || '🚀';
+            
+            // Use the updated name if provided, otherwise fall back to existing
+            const characterName = updates.name || existingCharacter.name;
+            
+            console.log('[CHARACTER] Posting embed to Discord...', {
+              channelId: game.channelId,
+              characterName,
+              className,
+              discordUserId: existingCharacter.playerId,
+            });
+            
+            await postEmbed(game.channelId, {
+              title: `${classEmoji} ${className}: ${characterName}`,
+              color: 0x5865F2, // Discord blurple
+              fields: [
+                {
+                  name: 'Stats',
+                  value: `**STR** ${existingCharacter.stats.strength}  **SPD** ${existingCharacter.stats.speed}  **INT** ${existingCharacter.stats.intellect}  **CMB** ${existingCharacter.stats.combat}  **SOC** ${existingCharacter.stats.social}`,
+                  inline: false,
+                },
+                {
+                  name: 'Saves',
+                  value: `**SAN** ${existingCharacter.saves.sanity}  **FEAR** ${existingCharacter.saves.fear}  **BODY** ${existingCharacter.saves.body}`,
+                  inline: false,
+                },
+              ],
+            }, game.discordGuildId, `<@${existingCharacter.playerId}> created a new character!`);
+            
+            console.log('[CHARACTER] Successfully posted to Discord');
+          } else {
+            console.log('[CHARACTER] Missing game channel, skipping Discord post');
+          }
+        } catch (error) {
+          console.error('Failed to post character creation to Discord:', error);
+          // Don't fail the mutation if Discord post fails
+        }
+      }
+      
+      return updatedCharacter;
     }),
 
   // Apply class modifiers to existing stats/saves

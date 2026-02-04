@@ -130,7 +130,8 @@ export async function postEmbed(
     color?: number;
     fields?: Array<{ name: string; value: string; inline?: boolean }>;
   },
-  guildId?: string
+  guildId?: string,
+  content?: string
 ): Promise<void> {
   const response = await fetch(
     `${DISCORD_API_BASE}/channels/${channelId}/messages`,
@@ -140,7 +141,10 @@ export async function postEmbed(
         Authorization: `Bot ${Resource.DiscordBotToken.value}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ embeds: [embed] }),
+      body: JSON.stringify({ 
+        content,
+        embeds: [embed] 
+      }),
     }
   );
 
