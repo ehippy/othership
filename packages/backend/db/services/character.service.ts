@@ -94,6 +94,27 @@ export const characterService = {
   },
 
   /**
+   * Update character (generic update for any fields)
+   */
+  async updateCharacter(
+    characterId: string,
+    updates: Partial<Character>
+  ): Promise<Character> {
+    // Fetch current character to get isRIP for index maintenance
+    const current = await this.getCharacter(characterId);
+    if (!current) {
+      throw new Error("Character not found");
+    }
+
+    const result = await CharacterEntity.patch({ id: characterId })
+      .set(updates)
+      .composite({ isRIP: current.isRIP })
+      .go();
+
+    return result.data as Character;
+  },
+
+  /**
    * Update character health
    */
   async updateHealth(characterId: string, health: number): Promise<Character> {

@@ -24,10 +24,54 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
     },
   });
 
-  const handleSubmit = () => {
-    // TODO: Validate all fields are filled
-    // TODO: Call mutation to update character status to 'ready'
-    alert("Character creation complete! (This will be implemented next)");
+  // Roll stat mutation
+  const rollStatMutation = trpc.character.rollStat.useMutation({
+    onSuccess: (data) => {
+      console.log(`Rolled ${data.rolls[0]} + ${data.rolls[1]} + 25 = ${data.value}`);
+      onComplete(); // Refresh character data
+    },
+    onError: (error) => {
+      alert(`Failed to roll: ${error.message}`);
+    },
+  });
+
+  // Roll save mutation
+  const rollSaveMutation = trpc.character.rollSave.useMutation({
+    onSuccess: (data) => {
+      console.log(`Rolled ${data.rolls[0]} + ${data.rolls[1]} + 10 = ${data.value}`);
+      onComplete(); // Refresh character data
+    },
+    onError: (error) => {
+      alert(`Failed to roll: ${error.message}`);
+    },
+  });
+
+  // Check if all stats are rolled
+  const allStatsRolled = character.stats.strength > 0 && 
+    character.stats.speed > 0 && 
+    character.stats.intellect > 0 && 
+    character.stats.combat > 0 && 
+    character.stats.social > 0;
+
+  // Check if all saves are rolled
+  const allSavesRolled = character.saves.sanity > 0 && 
+    character.saves.fear > 0 && 
+    character.saves.body > 0;
+
+  const handleSaveStep1 = () => {
+    updateCharacterMutation.mutate({
+      characterId: character.id,
+      name: formData.name,
+      characterClass: formData.characterClass,
+    });
+    setStep(2);
+  };
+
+  const handleCompleteCharacter = () => {
+    updateCharacterMutation.mutate({
+      characterId: character.id,
+      status: 'ready',
+    });
   };
 
   return (
@@ -101,11 +145,11 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
 
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setStep(2)}
-                disabled={!formData.name || !formData.characterClass}
+                onClick={handleSaveStep1}
+                disabled={!formData.name || !formData.characterClass || updateCharacterMutation.isPending}
                 className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded transition-colors"
               >
-                Next: Roll Stats
+                {updateCharacterMutation.isPending ? 'Saving...' : 'Next: Roll Stats'}
               </button>
             </div>
           </div>
@@ -115,24 +159,30 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
         {step === 2 && (
           <div>
             <h3 className="text-xl font-semibold mb-4">Roll Stats</h3>
-            <p className="text-gray-400 mb-6">Roll 2d10 + 25 for each stat</p>
+            <p className="text-gray-400 mb-6">Roll 2d10 + 25 for each stat (once rolled, cannot reroll)</p>
             
             <div className="space-y-4 mb-6">
-              {['strength', 'speed', 'intellect', 'combat', 'social'].map((stat) => (
-                <div key={stat} className="flex items-center justify-between">
-                  <span className="capitalize text-gray-300">{stat}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-indigo-400">
-                      {character.stats[stat as keyof typeof character.stats] || 0}
-                    </span>
-                    <button
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors text-sm"
-                    >
-                      Roll
-                    </button>
+              {(['strength', 'speed', 'intellect', 'combat', 'social'] as const).map((stat) => {
+                const value = character.stats[stat];
+                const isRolled = value > 0;
+                return (
+                  <div key={stat} className="flex items-center justify-between">
+                    <span className="capitalize text-gray-300">{stat}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-2xl font-bold ${isRolled ? 'text-indigo-400' : 'text-gray-600'}`}>
+                        {value || '—'}
+                      </span>
+                      <button
+                        onClick={() => rollStatMutation.mutate({ characterId: character.id, stat })}
+                        disabled={isRolled || rollStatMutation.isPending}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed disabled:text-gray-600 text-white rounded transition-colors text-sm min-w-[70px]"
+                      >
+                        {rollStatMutation.isPending ? '...' : isRolled ? 'Rolled' : 'Roll'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex justify-between">
@@ -144,7 +194,8 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
               </button>
               <button
                 onClick={() => setStep(3)}
-                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors"
+                disabled={!allStatsRolled}
+                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded transition-colors"
               >
                 Next: Roll Saves
               </button>
@@ -156,24 +207,30 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
         {step === 3 && (
           <div>
             <h3 className="text-xl font-semibold mb-4">Roll Saves</h3>
-            <p className="text-gray-400 mb-6">Roll 2d10 + 10 for each save</p>
+            <p className="text-gray-400 mb-6">Roll 2d10 + 10 for each save (once rolled, cannot reroll)</p>
             
             <div className="space-y-4 mb-6">
-              {['sanity', 'fear', 'body'].map((save) => (
-                <div key={save} className="flex items-center justify-between">
-                  <span className="capitalize text-gray-300">{save}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-bold text-indigo-400">
-                      {character.saves[save as keyof typeof character.saves] || 0}
-                    </span>
-                    <button
-                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors text-sm"
-                    >
-                      Roll
-                    </button>
+              {(['sanity', 'fear', 'body'] as const).map((save) => {
+                const value = character.saves[save];
+                const isRolled = value > 0;
+                return (
+                  <div key={save} className="flex items-center justify-between">
+                    <span className="capitalize text-gray-300">{save}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-2xl font-bold ${isRolled ? 'text-indigo-400' : 'text-gray-600'}`}>
+                        {value || '—'}
+                      </span>
+                      <button
+                        onClick={() => rollSaveMutation.mutate({ characterId: character.id, save })}
+                        disabled={isRolled || rollSaveMutation.isPending}
+                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed disabled:text-gray-600 text-white rounded transition-colors text-sm min-w-[70px]"
+                      >
+                        {rollSaveMutation.isPending ? '...' : isRolled ? 'Rolled' : 'Roll'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex justify-between">
@@ -184,10 +241,11 @@ export function CharacterCreationWizard({ character, onComplete }: CharacterCrea
                 Back
               </button>
               <button
-                onClick={handleSubmit}
-                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors font-semibold"
+                onClick={handleCompleteCharacter}
+                disabled={!allSavesRolled || updateCharacterMutation.isPending}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded transition-colors font-semibold"
               >
-                Complete Character
+                {updateCharacterMutation.isPending ? 'Saving...' : 'Complete Character'}
               </button>
             </div>
           </div>

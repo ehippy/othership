@@ -227,7 +227,7 @@ export const gameRouter = router({
         const character = await characterService.createCharacter({
           playerId: member.playerId,
           gameId: game.id,
-          name: member.playerUsername, // Default to Discord username, they'll change it
+          name: "", // Player will name their character
         });
         createdCharacters.push(character);
         console.log('[beginCharacterCreation] Created character for:', member.playerUsername);

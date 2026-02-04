@@ -32,7 +32,7 @@ export default function GamePage() {
     { gameId: game?.id || "" },
     { 
       enabled: !!game?.id && (game?.status === "character_creation" || game?.status === "active"),
-      refetchInterval: game?.status === "character_creation" ? 5000 : false, // Poll every 5s during character creation
+      refetchInterval: game?.status === "character_creation" ? 30000 : false, // Poll every 30s during character creation
     }
   );
 

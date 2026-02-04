@@ -12,6 +12,11 @@ const trpcHandler = awsLambdaRequestHandler({
 export const handler = async (
   event: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> => {
+  // Log incoming request with path
+  const path = event.requestContext.http.path;
+  const method = event.requestContext.http.method;
+  console.log(`[${method}] ${path}`);
+
   // Handle CORS preflight
   if (event.requestContext.http.method === "OPTIONS") {
     return {

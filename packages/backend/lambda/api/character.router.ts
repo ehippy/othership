@@ -80,6 +80,113 @@ export const characterRouter = router({
       );
     }),
 
+  // Update character (for character creation)
+  update: publicProcedure
+    .input(
+      z.object({
+        characterId: z.string(),
+        name: z.string().optional(),
+        characterClass: z.enum(['marine', 'android', 'scientist', 'teamster']).optional(),
+        status: z.enum(['creating', 'ready', 'rip']).optional(),
+        stats: z.object({
+          strength: z.number(),
+          speed: z.number(),
+          intellect: z.number(),
+          combat: z.number(),
+          social: z.number(),
+        }).optional(),
+        saves: z.object({
+          sanity: z.number(),
+          fear: z.number(),
+          body: z.number(),
+        }).optional(),
+        maxHealth: z.number().optional(),
+        maxWounds: z.number().optional(),
+        skills: z.array(z.string()).optional(),
+        loadout: z.array(z.string()).optional(),
+        trinket: z.string().optional(),
+        patch: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { characterId, ...updates } = input;
+      return await characterService.updateCharacter(characterId, updates);
+    }),
+
+  // Roll for a stat (2d10 + 25)
+  rollStat: publicProcedure
+    .input(
+      z.object({
+        characterId: z.string(),
+        stat: z.enum(['strength', 'speed', 'intellect', 'combat', 'social']),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const character = await characterService.getCharacter(input.characterId);
+      if (!character) {
+        throw new Error("Character not found");
+      }
+
+      // Check if already rolled (stat is not 0)
+      if (character.stats[input.stat] !== 0) {
+        throw new Error("Stat already rolled");
+      }
+
+      // Roll 2d10 + 25
+      const die1 = rollDie(10);
+      const die2 = rollDie(10);
+      const value = die1 + die2 + 25;
+
+      // Update the stat
+      const updatedStats = { ...character.stats, [input.stat]: value };
+      const updatedCharacter = await characterService.updateCharacter(input.characterId, {
+        stats: updatedStats,
+      });
+
+      return {
+        character: updatedCharacter,
+        rolls: [die1, die2],
+        value,
+      };
+    }),
+
+  // Roll for a save (2d10 + 10)
+  rollSave: publicProcedure
+    .input(
+      z.object({
+        characterId: z.string(),
+        save: z.enum(['sanity', 'fear', 'body']),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const character = await characterService.getCharacter(input.characterId);
+      if (!character) {
+        throw new Error("Character not found");
+      }
+
+      // Check if already rolled (save is not 0)
+      if (character.saves[input.save] !== 0) {
+        throw new Error("Save already rolled");
+      }
+
+      // Roll 2d10 + 10
+      const die1 = rollDie(10);
+      const die2 = rollDie(10);
+      const value = die1 + die2 + 10;
+
+      // Update the save
+      const updatedSaves = { ...character.saves, [input.save]: value };
+      const updatedCharacter = await characterService.updateCharacter(input.characterId, {
+        saves: updatedSaves,
+      });
+
+      return {
+        character: updatedCharacter,
+        rolls: [die1, die2],
+        value,
+      };
+    }),
+
   // Move character
   move: publicProcedure
     .input(
