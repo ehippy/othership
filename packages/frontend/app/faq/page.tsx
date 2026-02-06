@@ -35,7 +35,7 @@ export default function FAQPage() {
                 meets Alien Isolation.
               </p>
               <p>
-                The game is built on the <strong>Mothership RPG</strong> Panic Enginer by Tuesday Knight Games, 
+                The game is built on the <strong>Mothership RPG</strong> Panic Engine by Tuesday Knight Games, 
                 using their stress mechanics, skill checks, and deadly combat to create tense, 
                 atmospheric horror experiences. If you enjoy DERELICT, check out the full{" "}
                 <a 
